@@ -25,8 +25,6 @@ import {
   Reply,
 } from "@material-ui/icons";
 
-import { Picker } from "emoji-mart";
-
 import MarkdownWrapper from "../MarkdownWrapper";
 import VcardPreview from "../VcardPreview";
 import LocationPreview from "../LocationPreview";
@@ -48,12 +46,6 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { QueueSelectedContext } from "../../context/QueuesSelected/QueuesSelectedContext";
 import AudioModal from "../AudioModal";
 import { ForwardMessageModal } from "../ForwardMessageModal";
-
-import { MdLocalPhone, MdOutlineEmojiEmotions, MdPhoneMissed } from "react-icons/md";
-import { Stack } from "@mui/material";
-
-
-import './styles.css';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -93,9 +85,6 @@ const useStyles = makeStyles((theme) => ({
     flexDirection: "column",
     flexGrow: 1,
     padding: "20px 20px 20px 20px",
-    [theme.breakpoints.down("xs")]: {
-      padding: "20px 20px 100px 20px",
-    },
     overflowY: "scroll",
     ...theme.scrollbarStyles,
   },
@@ -114,9 +103,6 @@ const useStyles = makeStyles((theme) => ({
     marginTop: 2,
     minWidth: 100,
     maxWidth: 600,
-    [theme.breakpoints.down("xs")]: {
-      maxWidth: 300,
-    },
     height: "auto",
     display: "block",
     position: "relative",
@@ -171,9 +157,6 @@ const useStyles = makeStyles((theme) => ({
     marginTop: 2,
     minWidth: 100,
     maxWidth: 600,
-    [theme.breakpoints.down("xs")]: {
-      maxWidth: 300,
-    },
     height: "auto",
     display: "block",
     position: "relative",
@@ -268,7 +251,6 @@ const useStyles = makeStyles((theme) => ({
   textContentItem: {
     overflowWrap: "break-word",
     padding: "3px 80px 6px 6px",
-
   },
 
   textContentItemDeleted: {
@@ -410,7 +392,6 @@ const reducer = (state, action) => {
 
   if (action.type === "DELETE_MESSAGE") {
     const messageToDelete = action.payload;
-
     const messageIndex = state.findIndex((m) => m.id === messageToDelete.id);
 
     if (messageIndex !== -1) {
@@ -463,9 +444,6 @@ const MessagesList = ({
   // const { showSelectMessageCheckbox } = useContext(ForwardMessageContext);
   const { selectedMessages, setForwardMessageModalOpen, showSelectMessageCheckbox, setShowSelectMessageCheckbox, forwardMessageModalOpen } = useContext(ForwardMessageContext);
 
-  const [showEmoji, setShowEmoji] = useState(false);
-  const [selectedMessageToReact, setSelectedMessageToReact] = useState(null);
-
 
 
   const { user } = useContext(AuthContext);
@@ -497,8 +475,6 @@ const MessagesList = ({
   useEffect(() => {
     dispatch({ type: "RESET" });
     setPageNumber(1);
-
-    document.addEventListener('keydown', handleCloseEmojiOptions);
 
     currentTicketId.current = ticketId;
   }, [ticketId]);
@@ -560,35 +536,6 @@ const MessagesList = ({
       socket.disconnect();
     };
   }, [ticketId]);
-
-  const handleOpenEmojiOptions = (message) => {
-
-    setShowEmoji(!showEmoji);
-    setSelectedMessageToReact(message)
-  }
-
-  const handleCloseEmojiOptions = (e) => {
-    if (e.keyCode === 27) {
-      setShowEmoji(false);
-    }
-  }
-
-  const reactMessage = async (e) => {
-    setShowEmoji(false);
-    let emoji = e.native;
-    const body = {
-      text: emoji,
-      fromMe: selectedMessageToReact.fromMe,
-      id: selectedMessageToReact.wid,
-      remoteJid: selectedMessageToReact.remoteJid,
-      ticketId: selectedMessageToReact.ticketId,
-    }
-    try {
-      const { data } = await api.post("react/messages", body);
-    } catch (error) {
-      console.log(error);
-    }
-  }
 
   const loadMore = () => {
     setPageNumber((prevPageNumber) => prevPageNumber + 1);
@@ -941,64 +888,61 @@ const MessagesList = ({
         if (!message.fromMe) {
           return (
             <React.Fragment key={message.id}>
-
               {renderDailyTimestamps(message, index)}
               {renderTicketsSeparator(message, index)}
               {renderMessageDivider(message, index)}
-              <div id="messageReactionIconContainer">
-                <Stack direction={'row'} spacing={0.5} alignItems={'center'} >
-                  <div
-                    className={classes.messageLeft}
-                    title={message.queueId && message.queue?.name}
-                    onDoubleClick={(e) => hanldeReplyMessage(e, message)}
-                  >
-                    {showSelectMessageCheckbox && (
-                      <SelectMessageCheckbox
-                        message={message}
-                      />
-                    )}
-                    <IconButton
-                      variant="contained"
-                      size="small"
-                      id="messageActionsButton"
-                      disabled={message.isDeleted}
-                      className={classes.messageActionsButton}
-                      onClick={(e) => handleOpenMessageOptionsMenu(e, message)}
-                    >
-                      <ExpandMore />
-                    </IconButton>
+              <div
+                className={classes.messageLeft}
+                title={message.queueId && message.queue?.name}
+                onDoubleClick={(e) => hanldeReplyMessage(e, message)}
+              >
+                {showSelectMessageCheckbox && (
+                  <SelectMessageCheckbox
+                    message={message}
+                  />
+                )}
+                <IconButton
+                  variant="contained"
+                  size="small"
+                  id="messageActionsButton"
+                  disabled={message.isDeleted}
+                  className={classes.messageActionsButton}
+                  onClick={(e) => handleOpenMessageOptionsMenu(e, message)}
+                >
+                  <ExpandMore />
+                </IconButton>
 
-                    {message.isForwarded && (
-                      <div>
-                        <span className={classes.forwardMessage}
-                        ><Reply style={{ color: "grey", transform: 'scaleX(-1)' }} /> Encaminhada
-                        </span>
-                        <br />
-                      </div>
-                    )}
-                    {isGroup && (
-                      <span className={classes.messageContactName}>
-                        {message.contact?.name}
-                      </span>
-                    )}
+                {message.isForwarded && (
+                  <div>
+                    <span className={classes.forwardMessage}
+                    ><Reply style={{ color: "grey", transform: 'scaleX(-1)' }} /> Encaminhada
+                    </span>
+                    <br />
+                  </div>
+                )}
+                {isGroup && (
+                  <span className={classes.messageContactName}>
+                    {message.contact?.name}
+                  </span>
+                )}
 
-                    {/* {isGroup && (
+                {/* {isGroup && (
                   <span className={classes.messageContactName}>
                     {JSON.parse(message.dataJson).pushName} #{message.contact?.name}
                   </span>
                 )} */}
 
-                    {/* aviso de mensagem apagado pelo contato */}
+                {/* aviso de mensagem apagado pelo contato */}
 
-                    {!lgpdDeleteMessage && message.isDeleted && (
-                      <div>
-                        <span className={classes.deletedMessage}
-                        >🚫 Essa mensagem foi apagada pelo contato &nbsp;
-                        </span>
-                      </div>
-                    )}
+                {!lgpdDeleteMessage && message.isDeleted && (
+                  <div>
+                    <span className={classes.deletedMessage}
+                    >🚫 Essa mensagem foi apagada pelo contato &nbsp;
+                    </span>
+                  </div>
+                )}
 
-                    {/* {message.isEdited && (
+                {/* {message.isEdited && (
                   <div>
                     <span className={classes.deletedMessage}
                     >Essa mensagem foi editada pelo contato &nbsp;
@@ -1006,48 +950,34 @@ const MessagesList = ({
                   </div>
                 )} */}
 
-                    {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "contactMessage"
-                      //|| message.mediaType === "multi_vcard" 
-                    ) && checkMessageMedia(message)}
+                {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "contactMessage"
+                  //|| message.mediaType === "multi_vcard" 
+                ) && checkMessageMedia(message)}
 
-                    <div className={clsx(classes.textContentItem, {
-                      [classes.textContentItemDeleted]: message.isDeleted,
-                    })}>
-                      {message.quotedMsg && renderQuotedMessage(message)}
+                <div className={clsx(classes.textContentItem, {
+                  [classes.textContentItemDeleted]: message.isDeleted,
+                })}>
+                  {message.quotedMsg && renderQuotedMessage(message)}
 
-                      {(message.mediaType === "image" && path.basename(message.mediaUrl) === message.body) || (message.mediaType !== "audio" && message.mediaType != "reactionMessage" && message.mediaType != "locationMessage" && message.mediaType !== "contactMessage") && (
-                        <MarkdownWrapper>{(lgpdDeleteMessage && message.isDeleted) ? "🚫 _Mensagem apagada_ " : message.body}</MarkdownWrapper>
-                      )}
+                  {(message.mediaType === "image" && path.basename(message.mediaUrl) === message.body) || (message.mediaType !== "audio" && message.mediaType != "reactionMessage" && message.mediaType != "locationMessage" && message.mediaType !== "contactMessage") && (
+                    <MarkdownWrapper>{(lgpdDeleteMessage && message.isDeleted) ? "🚫 _Mensagem apagada_ " : message.body}</MarkdownWrapper>
+                  )}
 
-                      {message.quotedMsg && message.mediaType === "reactionMessage" && (
-                        <>
-                          <span style={{ marginLeft: "0px" }}>
-                            <MarkdownWrapper>
-                              {"" + message?.contact?.name + " reagiu... " + message.body}
-                            </MarkdownWrapper>
-                          </span>
-                        </>
-                      )}
+                  {message.quotedMsg && message.mediaType === "reactionMessage" && (
+                    <>
+                      <span style={{ marginLeft: "0px" }}>
+                        <MarkdownWrapper>
+                          {"" + message?.contact?.name + " reagiu... " + message.body}
+                        </MarkdownWrapper>
+                      </span>
+                    </>
+                  )}
 
-                      <span className={classes.timestamp}>  {message.isEdited ? "Editada " + format(parseISO(message.createdAt), "HH:mm") : format(parseISO(message.createdAt), "HH:mm")}  </span>
+                  <span className={classes.timestamp}>  {message.isEdited ? "Editada " + format(parseISO(message.createdAt), "HH:mm") : format(parseISO(message.createdAt), "HH:mm")}  </span>
 
 
 
-                    </div>
-
-                  </div>
-
-                  <div id="messageReactionIcon">
-                    <IconButton
-                      variant="contained"
-                      size="small"
-                      onClick={() => handleOpenEmojiOptions(message)}
-                    >
-
-                      <MdOutlineEmojiEmotions size={22} />
-                    </IconButton>
-                  </div>
-                </Stack>
+                </div>
               </div>
             </React.Fragment>
           );
@@ -1157,17 +1087,6 @@ const MessagesList = ({
           handleClose={handleCloseMessageOptionsMenu}
           ticketGroup={ticket}
         />)}
-
-      {showEmoji &&
-        <Picker
-          style={{ position: 'absolute', bottom: 30, left: 0, zIndex: 1 }}
-          perLine={16}
-          showPreview={false}
-          showSkinTones={false}
-          onSelect={reactMessage}
-        />
-      }
-
       <div
         id="messagesList"
         className={classes.messagesList}

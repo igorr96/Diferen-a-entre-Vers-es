@@ -14,9 +14,6 @@ import Typography from "@material-ui/core/Typography";
 import Avatar from "@material-ui/core/Avatar";
 import Divider from "@material-ui/core/Divider";
 import Badge from "@material-ui/core/Badge";
-import FaceIcon from '@mui/icons-material/Face';
-import WifiCallingIcon from '@mui/icons-material/WifiCalling';
-import TurnedInNotIcon from '@mui/icons-material/TurnedInNot';
 
 import { i18n } from "../../translate/i18n";
 
@@ -45,7 +42,6 @@ import { isNil } from "lodash";
 import { toast } from "react-toastify";
 import { Done, HighlightOff, Replay, SwapHoriz } from "@material-ui/icons";
 import useCompanySettings from "../../hooks/useSettings/companySettings";
-import { Chip, Stack } from "@mui/material";
 
 // import contrastColor from "../../helpers/contrastColor";
 
@@ -247,7 +243,7 @@ const TicketListItemCustom = ({ ticket }) => {
     const { setCurrentTicket } = useContext(TicketsContext);
     const { user } = useContext(AuthContext);
 
-
+       
     const { get: getSetting } = useCompanySettings();
 
     useEffect(() => {
@@ -266,7 +262,7 @@ const TicketListItemCustom = ({ ticket }) => {
     }, []);
 
     const handleOpenAcceptTicketWithouSelectQueue = useCallback(() => {
-
+      
         setAcceptTicketWithouSelectQueueOpen(true);
     }, []);
 
@@ -532,7 +528,7 @@ const TicketListItemCustom = ({ ticket }) => {
                                 component="span"
                                 variant="body2"
                                 color="textSecondary"
-
+                         
                             >
                                 {["composing", "recording"].includes(ticket?.presence) ? (
                                     <span className={classes.presence}>
@@ -556,19 +552,11 @@ const TicketListItemCustom = ({ ticket }) => {
 
                                     </>
                                 }
-                                {/* <span className={classes.secondaryContentSecond} >
+                                <span className={classes.secondaryContentSecond} >
                                     {whatsAppName ? <Badge className={classes.connectionTag}>{whatsAppName}</Badge> : <br></br>}
                                     {<Badge style={{ backgroundColor: ticket.queue?.color || "#7c7c7c" }} className={classes.connectionTag}>{ticket.queue?.name.toUpperCase() || "SEM FILA"}</Badge>}
                                     {ticketUser && (<Badge style={{ backgroundColor: "#000000" }} className={classes.connectionTag}>{ticketUser}</Badge>)}
-
-                                </span> */}
-                                <Stack direction="row" spacing={1} mt={1}>
-                                    {whatsAppName && (<Chip sx={{ mt: 1 }} avatar={<WifiCallingIcon />} label={whatsAppName} variant="outlined" size="small" />)}
-                                    {(<Chip sx={{ mt: 1 }} avatar={<TurnedInNotIcon />} label={ticket.queue?.name.toUpperCase() || "SEM FILA"} variant="outlined" size="small" />)}
-                                    {ticketUser && (<Chip sx={{ mt: 1 }} avatar={<FaceIcon />} label={ticketUser} variant="outlined" size="small" />)}
-
-
-                                </Stack>
+                                </span>
                                 <span className={classes.secondaryContentSecond} >
                                     {
                                         tag?.map((tag) => {

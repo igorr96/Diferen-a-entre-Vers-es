@@ -20,7 +20,6 @@ import { CardHeader, Switch, Tooltip } from "@material-ui/core";
 import { ContactForm } from "../ContactForm";
 import ContactModal from "../ContactModal";
 import { ContactNotes } from "../ContactNotes";
-import ContactMedia from "../ContactMedia";
 
 import { AuthContext } from "../../context/Auth/AuthContext";
 import useCompanySettings from "../../hooks/useSettings/companySettings";
@@ -63,7 +62,7 @@ const useStyles = makeStyles(theme => ({
 		justifyContent: "center",
 		overflowY: "scroll",
 		...theme.scrollbarStyles,
-	},
+	},	
 
 	contactAvatar: {
 		margin: 15,
@@ -99,7 +98,7 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
 	const classes = useStyles();
 
 	const [modalOpen, setModalOpen] = useState(false);
-	const [blockingContact, setBlockingContact] = useState(contact.active);
+    const [blockingContact, setBlockingContact] = useState(contact.active);
 	const [openForm, setOpenForm] = useState(false);
 	const { get } = useCompanySettings();
 	const [hideNum, setHideNum] = useState(false);
@@ -107,18 +106,18 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
 	const [disableBot, setDisableBot] = useState(contact.disableBot);
 
 	useEffect(() => {
-		async function fetchData() {
+        async function fetchData() {
 
-			const lgpdHideNumber = await get({
-				"column": "lgpdHideNumber"
+            const lgpdHideNumber = await get({
+    			"column":"lgpdHideNumber"
 			});
+           
+            if (lgpdHideNumber === "enabled") setHideNum(true);
 
-			if (lgpdHideNumber === "enabled") setHideNum(true);
-
-		}
-		fetchData();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
+        }
+        fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
 	useEffect(() => {
 		setOpenForm(false);
@@ -127,10 +126,10 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
 
 	const handleContactToggleDisableBot = async () => {
 
-		const { id } = contact;
+		const {id} = contact;
 
 		try {
-			const { data } = await api.put(`/contacts/toggleDisableBot/${id}`);
+			const {data} = await api.put(`/contacts/toggleDisableBot/${id}`);
 			contact.disableBot = data.disableBot;
 			setDisableBot(data.disableBot)
 
@@ -140,27 +139,27 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
 	};
 
 	const handleBlockContact = async (contactId) => {
-		try {
-			await api.put(`/contacts/block/${contactId}`, { active: false });
-			toast.success("Contato bloqueado");
-		} catch (err) {
-			toastError(err);
-		}
+        try {
+            await api.put(`/contacts/block/${contactId}`, { active: false });
+            toast.success("Contato bloqueado");
+        } catch (err) {
+            toastError(err);
+        }
 
-		setBlockingContact(true);
-	};
+        setBlockingContact(true);
+    };
 
-	const handleUnBlockContact = async (contactId) => {
-		try {
-			await api.put(`/contacts/block/${contactId}`, { active: true });
-			toast.success("Contato desbloqueado");
-		} catch (err) {
-			toastError(err);
-		}
-		setBlockingContact(false);
-	};
+    const handleUnBlockContact = async (contactId) => {
+        try {
+            await api.put(`/contacts/block/${contactId}`, { active: true });
+            toast.success("Contato desbloqueado");
+        } catch (err) {
+            toastError(err);
+        }
+        setBlockingContact(false);
+    };
 
-	if (loading) return null;
+	if(loading) return null;
 
 	return (
 		<>
@@ -201,10 +200,10 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
 									name="disableBot"
 									color="primary"
 								/>
-								{i18n.t("contactModal.form.chatBotContact")}
+									{i18n.t("contactModal.form.chatBotContact")}
 							</Typography>
 						</>
-					) : (<br />)}
+					) : (<br />)}					
 				</div>
 				{loading ? (
 					<ContactDrawerSkeleton classes={classes} />
@@ -228,7 +227,7 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
 								subheader={
 									<>
 										<Typography style={{ fontSize: 12 }}>
-											{hideNum && user.profile === "user" ? formatSerializedId(contact.number).slice(0, -6) + "**-**" + contact.number.slice(-2) : formatSerializedId(contact.number)}
+											{hideNum && user.profile === "user" ? formatSerializedId(contact.number).slice(0,-6)+"**-**"+ contact.number.slice(-2): formatSerializedId(contact.number)}
 										</Typography>
 										<Typography style={{ color: "primary", fontSize: 12 }}>
 											<Link href={`mailto:${contact.email}`}>{contact.email}</Link>
@@ -253,13 +252,10 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
 								disabled={loading}
 							>
 								{!contact.active ? "Desbloquear contato" : "Bloquear contato"}
-							</Button>
+							</Button>							
 							{(contact.id && openForm) && <ContactForm initialContact={contact} onCancel={() => setOpenForm(false)} />}
 						</Paper>
 						{/* <TagsContainer contact={contact} className={classes.contactTags} /> */}
-						<Paper square variant="outlined">
-							<ContactMedia ticket={ticket} />
-						</Paper>
 						<Paper square variant="outlined" className={classes.contactDetails}>
 							<Typography variant="subtitle1" style={{ marginBottom: 10 }}>
 								{i18n.t("ticketOptionsMenu.appointmentsModal.title")}

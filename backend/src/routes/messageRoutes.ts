@@ -11,11 +11,8 @@ const upload = multer(uploadConfig);
 
 messageRoutes.get("/messages/:ticketId", isAuth, MessageController.index);
 messageRoutes.post("/messages/:ticketId", isAuth, upload.array("medias"), MessageController.store);
-messageRoutes.get("/messages/getmedia/:ticketId", isAuth, MessageController.GetTicketMedia);
 messageRoutes.post("/forwardmessage", isAuth, MessageController.forwardmessage);
 messageRoutes.delete("/messages/:messageId", isAuth, MessageController.remove);
-
-messageRoutes.post("/react/messages", isAuth, MessageController.ReactMessage);
 
 messageRoutes.get("/messages-allMe", isAuth, MessageController.allMe);
 messageRoutes.post('/message/forward', isAuth, MessageController.forwardMessage)
