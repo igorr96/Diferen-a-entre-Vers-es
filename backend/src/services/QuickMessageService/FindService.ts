@@ -7,9 +7,10 @@ import User from "../../models/User";
 type Params = {
   companyId: string;
   userId: string;
+  showAll: string;
 };
 
-const FindService = async ({ companyId, userId }: Params): Promise<QuickMessage[]> => {
+const FindService = async ({ companyId, userId, showAll }: Params): Promise<QuickMessage[]> => {
 
   const userProfile = (await User.findByPk(userId))?.profile;
 
@@ -19,6 +20,7 @@ const FindService = async ({ companyId, userId }: Params): Promise<QuickMessage[
      where: {
        companyId,
        geral: true,
+       ...(showAll === "true" ? {} : { isCategory: false })
      },
      include: [{ model: Company, as: "company", attributes: ["id", "name"] }],
      order: [["shortcode", "ASC"]]
@@ -27,6 +29,7 @@ const FindService = async ({ companyId, userId }: Params): Promise<QuickMessage[
     notes =  await QuickMessage.findAll({
       where: {
         companyId,
+        ...(showAll === "true" ? {} : { isCategory: false })
       },
       include: [{ model: Company, as: "company", attributes: ["id", "name"] }],
       order: [["shortcode", "ASC"]]

@@ -18,13 +18,10 @@ const isAuthApi = async (
     const whatsapp = await Whatsapp.findOne({ where: { token } });
 
     const getToken = whatsapp?.token;
-    if (!getToken) {
+    if ((!getToken) || (getToken !== token)) {
       throw new AppError("ERR_SESSION_EXPIRED", 401);
     }
 
-    if (getToken !== token) {
-      throw new AppError("ERR_SESSION_EXPIRED", 401);
-    }
   } catch (err) {
     throw new AppError(
       "Invalid token. We'll try to assign a new one on next request",

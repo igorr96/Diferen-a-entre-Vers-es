@@ -17,7 +17,7 @@ import AttachFileIcon from "@material-ui/icons/AttachFile";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import IconButton from "@material-ui/core/IconButton";
 import { i18n } from "../../translate/i18n";
-import { head } from "lodash";
+import { head, padEnd } from "lodash";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
@@ -85,6 +85,8 @@ const QuickMessageDialog = ({ open, onClose, quickemessageId, reload }) => {
     message: "",
     geral: false,
     status: true,
+    isCategory: false,
+    categoryId: '',
   };
 
   const [confirmationOpen, setConfirmationOpen] = useState(false);
@@ -227,22 +229,66 @@ const QuickMessageDialog = ({ open, onClose, quickemessageId, reload }) => {
             }, 400);
           }}
         >
-          {({ touched, errors, isSubmitting, setFieldValue  }) => (
+          {({ touched, errors, isSubmitting, setFieldValue, values  }) => (
             <Form>
               <DialogContent dividers>
                 <Grid spacing={2} container>
+                <Grid xs={12} style={{ padding: 0, marginRight: 15 }} item>
+                  <FormControl
+                      size="small"
+                      variant="outlined"
+                      fullWidth
+                      className={classes.formControl}
+                  >
+
+                      <InputLabel id="profile-selection-input-label">
+                          {'Categoria'}
+                      </InputLabel>
+
+                      <Field
+                          as={Select}
+                          label={'Categoria'}
+                          name="isCategory"
+                          labelId="profile-selection-label"
+                          id="profile-selection"
+                          required
+                      >
+                          <MenuItem value={true}>Menu</MenuItem>
+                          <MenuItem value={false}>Resposta</MenuItem>
+                      </Field>
+                    </FormControl>
+                  </Grid>
                   <Grid xs={12} item>
                     <Field
-                      as={TextField}
-                      label={i18n.t("quickMessages.dialog.shortcode")}
-                      name="shortcode"
-                      error={touched.shortcode && Boolean(errors.shortcode)}
-                      helperText={touched.shortcode && errors.shortcode}
-                      variant="outlined"
-                      margin="dense"
-                      fullWidth
+                        as={TextField}
+                        autoFocus
+                        label={values.isCategory ? 'Nome do menu' : i18n.t("quickMessages.dialog.shortcode")}
+                        name="shortcode"
+                        error={touched.shortcode && Boolean(errors.shortcode)}
+                        helperText={touched.shortcode && errors.shortcode}
+                        variant="outlined"
+                        margin="dense"
+                        fullWidth
                     />
                   </Grid>
+                 { !values.isCategory &&
+                 <>
+                    <Grid xs={12} item  >
+                      <SelectQuickMessages value={values.categoryId} setValue={setFieldValue} />
+                    </Grid>
+                    <Grid xs={12} item>
+                      <Field
+                        as={TextField}
+                        label={i18n.t("quickMessages.dialog.shortcode")}
+                        name="shortcode"
+                        error={touched.shortcode && Boolean(errors.shortcode)}
+                        helperText={touched.shortcode && errors.shortcode}
+                        variant="outlined"
+                        margin="dense"
+                        fullWidth
+                      />
+                    </Grid>
+                  
                   <Grid xs={12} item>
                     <Field
                       as={TextField}
@@ -259,12 +305,14 @@ const QuickMessageDialog = ({ open, onClose, quickemessageId, reload }) => {
                       // disabled={quickemessage.mediaPath || attachment ? true : false}
                     />
                   </Grid>
+                  
                   <Grid item>
                       <MessageVariablesPicker
                           disabled={isSubmitting}
                           onClick={value => handleClickMsgVar(value, setFieldValue)}
                       />
                   </Grid>
+                  
                   {(profile === "admin" || profile === "supervisor") && (
                   <Grid xs={12} item>
                     <FormControl variant="outlined" margin="dense" fullWidth>
@@ -284,8 +332,10 @@ const QuickMessageDialog = ({ open, onClose, quickemessageId, reload }) => {
                         <MenuItem value={false}>{i18n.t("announcements.inactive")}</MenuItem>
                       </Field>
                     </FormControl>
-                  </Grid>
+                  </Grid>                  
                   )}
+                </>
+                }
                   {(quickemessage.mediaPath || attachment) && (
                     <Grid xs={12} item>
                       <Button startIcon={<AttachFileIcon />}>
@@ -300,9 +350,10 @@ const QuickMessageDialog = ({ open, onClose, quickemessageId, reload }) => {
                     </Grid>
                   )}
                 </Grid>
+              
               </DialogContent>
               <DialogActions>
-                {!attachment && !quickemessage.mediaPath && (
+                {!values.isCategory && !attachment && !quickemessage.mediaPath && (
                   <Button
                     color="primary"
                     onClick={() => attachmentFile.current.click()}
@@ -345,5 +396,50 @@ const QuickMessageDialog = ({ open, onClose, quickemessageId, reload }) => {
     </div>
   );
 };
+
+export const SelectQuickMessages = (props) => {
+
+const { value, setValue } = props;
+
+const [listCategories, setListCategories] = useState([]);
+// const [selectedCategory, setSelectedCategory] = useState(null);
+
+useEffect(() => {
+    getListQuickMessages();
+}, []);
+
+
+const getListQuickMessages = async () => {
+    try {
+        const { data } = await api.get('/quick-messages/listCategories');
+        setListCategories(data);
+
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+return (
+    <FormControl size="small" variant='outlined' fullWidth>
+        <InputLabel id="demo-simple-select-label">Menu</InputLabel>
+        <Select
+            fullWidth
+            labelId="demo-simple-select-label"
+            id="demo-simple-select"
+            value={value}
+            label="Menu"
+            onChange={(e) => setValue('categoryId', e.target.value)}
+        >
+            {listCategories.map((category) => (
+                <MenuItem key={category.id} value={category.id}>
+                    {category.shortcode}
+                </MenuItem>
+            ))}
+        </Select>
+    </FormControl>
+)
+
+}
+
 
 export default QuickMessageDialog;

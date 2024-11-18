@@ -6,10 +6,10 @@ const AuthContext = createContext();
 
 const AuthProvider = ({ children }) => {
 	const { loading, user, isAuth, handleLogin, handleLogout } = useAuth();
-
+	const [showDialogButton, setShowDialogButton] = React.useState(true);
 	return (
 		<AuthContext.Provider
-			value={{ loading, user, isAuth, handleLogin, handleLogout }}
+			value={{ loading, user, isAuth, handleLogin, handleLogout, showDialogButton, setShowDialogButton }}
 		>
 			{children}
 		</AuthContext.Provider>

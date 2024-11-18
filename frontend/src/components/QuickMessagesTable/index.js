@@ -41,8 +41,9 @@ function QuickMessagesTable(props) {
         return rows.map((message) => {
             return (
                 <TableRow key={message.id}>
-                    <TableCell align="center">{message.shortcode}</TableCell>
-                    <TableCell align="left">{message.message}</TableCell>
+                    <TableCell align="left">{message.message || 'MENU'}</TableCell>
+                    <TableCell align="left">{message?.category?.shortcode || message?.isCategory ? <Chip className={classes.backgroundDark} label={message?.category?.shortcode} variant="outlined" /> : 'Sem menu vinculada'}</TableCell>
+                    {/* <TableCell align="center">{message.shortcode}</TableCell> */}
                     { !readOnly ? (
                         <TableCell align="center">
                             <IconButton

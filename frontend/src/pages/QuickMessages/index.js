@@ -269,7 +269,7 @@ const Quickemessages = () => {
               <TableCell align="center">
                 {i18n.t("quickMessages.table.shortcode")}
               </TableCell>
-              
+              <TableCell align="center">Tipo de Mensagem</TableCell>
               <TableCell align="center">
                 {i18n.t("quickMessages.table.mediaName")}
               </TableCell>
@@ -286,40 +286,40 @@ const Quickemessages = () => {
               {quickemessages.map((quickemessage) => (
                 <TableRow key={quickemessage.id}>
                   <TableCell align="center">{quickemessage.shortcode}</TableCell>
-                  
+                  <TableCell align="center">{quickemessage.isCategory ? 'Menu' : 'Atalho'}</TableCell>
                   <TableCell align="center">
                     {quickemessage.mediaName ?? i18n.t("quickMessages.noAttachment")}
                   </TableCell>
                   <TableCell align="center">
-  					{quickemessage.geral === true ? (
-    					<CheckCircleIcon style={{ color: 'green' }} />
-  						) : (
-    					''
-  						)}
-				  </TableCell>
+                    {quickemessage.geral === true ? (
+                      <CheckCircleIcon style={{ color: 'green' }} />
+                      ) : (
+                      ''
+                      )}
+                  </TableCell>
                   <TableCell align="center">
-{(profile === "admin" || profile === "supervisor" ||
-  (profile === "user" && !quickemessage.geral)) && (
-  <IconButton
-    size="small"
-    onClick={() => handleEditQuickemessage(quickemessage)}
-  >
-    <EditIcon />
-  </IconButton>
-)}
+                    {(profile === "admin" || profile === "supervisor" ||
+                      (profile === "user" && !quickemessage.geral)) && (
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEditQuickemessage(quickemessage)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    )}
 
-{(profile === "admin" || profile === "supervisor" ||
-  (profile === "user" && !quickemessage.geral)) && (
-  <IconButton
-    size="small"
-    onClick={(e) => {
-      setConfirmModalOpen(true);
-      setDeletingQuickemessage(quickemessage);
-    }}
-  >
-    <DeleteOutlineIcon />
-  </IconButton>
-)}
+                    {(profile === "admin" || profile === "supervisor" ||
+                      (profile === "user" && !quickemessage.geral)) && (
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          setConfirmModalOpen(true);
+                          setDeletingQuickemessage(quickemessage);
+                        }}
+                      >
+                        <DeleteOutlineIcon />
+                      </IconButton>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

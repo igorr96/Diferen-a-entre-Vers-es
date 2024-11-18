@@ -129,7 +129,7 @@ const UpdateTicketService = async ({
         (!isNil(ratingMessage) && ratingMessage !== "") &&
         !ticket.isGroup) {
 
-        if (ticketTraking.ratingAt) {
+        if (!ticketTraking.ratingAt) {
 
           const ratingTxt = ratingMessage || "";
           let bodyRatingMessage = `\u200e${ratingTxt}\n`;

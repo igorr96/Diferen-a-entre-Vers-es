@@ -313,8 +313,7 @@ const useStyles = makeStyles((theme) => ({
 const MessageInput = ({ ticketId, ticketStatus }) => {
   const classes = useStyles();
   const [medias, setMedias] = useState([]);
-  const [mediaUrl,setMediaUrl] = useState('');
-  const [mediaName,setMediaName] = useState('');
+
   const [inputMessage, setInputMessage] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -1070,9 +1069,6 @@ const MessageInput = ({ ticketId, ticketStatus }) => {
               </Menu>
             </Hidden>
             <div className={classes.messageInputWrapper}>
-              <IconButton style={{ width: 50, boder:"2px solid red" }}>
-                <Submenus setInputMessage={setInputMessage} setMediaUrl={setMediaUrl} setMediaName={setMediaName} />
-              </IconButton>
               <InputBase
                 inputRef={(input) => {
                   input && input.focus();

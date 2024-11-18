@@ -8,7 +8,7 @@ import ShowService from "../services/QuickMessageService/ShowService";
 import UpdateService from "../services/QuickMessageService/UpdateService";
 import DeleteService from "../services/QuickMessageService/DeleteService";
 import FindService from "../services/QuickMessageService/FindService";
-
+import { FindCategoriesWithMessages } from "../services/QuickMessageService/FindCategoriesWithMessages";
 import QuickMessage from "../models/QuickMessage";
 import { head } from "lodash";
 import fs from "fs";
@@ -30,11 +30,14 @@ type StoreData = {
   mediaName?: string;
   geral: boolean;
   isMedia: boolean;
+  isCategory?: boolean;
+  categoryId?: number;
 };
 
 type FindParams = {
   companyId: string;
   userId: string;
+  showAll: string;
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
@@ -55,17 +58,30 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const { companyId } = req.user;
   const data = req.body as StoreData;
 
+  if (data.isCategory) {
+    const schema = Yup.object().shape({
+      shortcode: Yup.string().required()
+    });
+
+    try {
+      await schema.validate(data);
+    } catch (err: any) {
+      throw new AppError(err.message);
+    }
+  } else {
+
+    const schema = Yup.object().shape({
+      shortcode: Yup.string().required(),
+      message: data.isMedia ? Yup.string().notRequired() : Yup.string().required()
+    });
 
 
-  const schema = Yup.object().shape({
-    shortcode: Yup.string().required(),
-    message: data.isMedia ? Yup.string().notRequired() : Yup.string().required()
-  });
+    try {
+      await schema.validate(data);
+    } catch (err: any) {
+      throw new AppError(err.message);
+    }
 
-  try {
-    await schema.validate(data);
-  } catch (err: any) {
-    throw new AppError(err.message);
   }
 
   const record = await CreateService({
@@ -97,19 +113,34 @@ export const update = async (
 ): Promise<Response> => {
   const data = req.body as StoreData;
   const { companyId } = req.user;
+  const { id } = req.params;
 
-  const schema = Yup.object().shape({
-    shortcode: Yup.string().required(),
-    message: Yup.string().required()
-  });
+  if (data.isCategory) {
+    const schema = Yup.object().shape({
+      shortcode: Yup.string().required()
+    });
 
-  try {
-    await schema.validate(data);
-  } catch (err: any) {
-    throw new AppError(err.message);
+    try {
+      await schema.validate(data);
+    } catch (err: any) {
+      throw new AppError(err.message);
+    }
+  } else {
+
+    const schema = Yup.object().shape({
+      shortcode: Yup.string().required(),
+      message: Yup.string().required()
+    });
+
+
+    try {
+      await schema.validate(data);
+    } catch (err: any) {
+      throw new AppError(err.message);
+    }
+
   }
 
-  const { id } = req.params;
 
   const record = await UpdateService({
     ...data,
@@ -164,7 +195,7 @@ export const mediaUpload = async (
 
   try {
     const quickmessage = await QuickMessage.findByPk(id);
-    
+
     quickmessage.update ({
       mediaPath: file.originalname,
       mediaName: file.originalname
@@ -199,4 +230,23 @@ export const deleteMedia = async (
     } catch (err: any) {
       throw new AppError(err.message);
   }
+};
+
+
+export const notCategory = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId, id } = req.user;
+  const records: QuickMessage[] = await QuickMessage.findAll({
+    where: {
+      companyId,
+      // userId: id,
+      isCategory: true
+    }
+  });
+  return res.status(200).json(records);
+};
+
+export const categoriesMessages = async (req: Request, res: Response): Promise<Response> => {
+  const params = req.query as FindParams;
+  const records: QuickMessage[] = await FindCategoriesWithMessages(params);
+  return res.status(200).json(records);
 };

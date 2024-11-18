@@ -11,6 +11,10 @@ const routes = express.Router();
 
 routes.get("/quick-messages/list", isAuth, QuickMessageController.findList);
 
+routes.get("/quick-messages/categoriesMessages", isAuth, QuickMessageController.categoriesMessages);
+
+routes.get("/quick-messages/listCategories", isAuth, QuickMessageController.notCategory);
+
 routes.get("/quick-messages", isAuth, QuickMessageController.index);
 
 routes.get("/quick-messages/:id", isAuth, QuickMessageController.show);
@@ -22,16 +26,16 @@ routes.put("/quick-messages/:id", isAuth, QuickMessageController.update);
 routes.delete("/quick-messages/:id", isAuth, QuickMessageController.remove);
 
 routes.post(
-    "/quick-messages/:id/media-upload",
-    isAuth,
-    upload.array("file"),
-    QuickMessageController.mediaUpload
-  );
-  
-  routes.delete(
-    "/quick-messages/:id/media-upload",
-    isAuth,
-    QuickMessageController.deleteMedia
-  );
-  
+  "/quick-messages/:id/media-upload",
+  isAuth,
+  upload.array("file"),
+  QuickMessageController.mediaUpload
+);
+
+routes.delete(
+  "/quick-messages/:id/media-upload",
+  isAuth,
+  QuickMessageController.deleteMedia
+);
+
 export default routes;

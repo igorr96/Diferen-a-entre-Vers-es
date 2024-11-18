@@ -54,6 +54,10 @@ import Brightness4Icon from '@material-ui/icons/Brightness4';
 import Brightness7Icon from '@material-ui/icons/Brightness7';
 import { getBackendUrl } from "../config";
 
+import InternalChat from "../components/InternalChat";
+import { SpeedDial } from "@mui/material";
+import { BsChat } from "react-icons/bs";
+
 const backendUrl = getBackendUrl();
 
 const drawerWidth = 240;
@@ -147,6 +151,7 @@ const useStyles = makeStyles((theme) => ({
 
   appBarSpacer: {
     minHeight: "48px",
+    position: "relative",
   },
   content: {
     flex: 1,
@@ -254,10 +259,10 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
   const { dateToClient } = useDate();
   const [profileUrl, setProfileUrl] = useState(null);
-
+  const [chatInternal, setChatInternal] = useState(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const mainListItems = useMemo(() => <MainListItems drawerOpen={drawerOpen}  collapsed={!drawerOpen} />, [user, drawerOpen])
-
+  const currentPath = window.location.pathname;
   const config = {
     domain: '192.168.2.4', // sip-server@your-domain.io
     uri: 'sip:202@192.168.2.4', // sip:sip-user@your-domain.io
@@ -574,10 +579,10 @@ const LoggedInLayout = ({ children, themeToggle }) => {
               open={menuOpen}
               onClose={handleCloseMenu}
             >
-              <MenuItem onClick={handleOpenUserModal}>
+              <MenuItem key={1} onClick={handleOpenUserModal}>
                 {i18n.t("mainDrawer.appBar.user.profile")}
               </MenuItem>
-              <MenuItem onClick={handleClickLogout}>
+              <MenuItem key={2} onClick={handleClickLogout}>
                 {i18n.t("mainDrawer.appBar.user.logout")}
               </MenuItem>
             </Menu>
@@ -587,7 +592,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
       </AppBar>
       <main className={classes.content}>
         <div className={classes.appBarSpacer} />
-
+        {chatInternal && (<InternalChat />)}
         {children ? children : null}
       </main>
     </div>

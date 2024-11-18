@@ -99,6 +99,7 @@ interface IMe {
   id: string;
 }
 
+type IMineTypeMessage  = proto.Message.IDocumentMessage | proto.Message.IImageMessage | proto.Message.IAudioMessage | proto.Message.IVideoMessage | proto.Message.IStickerMessage;
 const writeFileAsync = promisify(writeFile);
 
 function removeFile(directory) {
@@ -370,6 +371,24 @@ const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
     };
 };
 
+const getMineType = (msg: proto.IWebMessageInfo):IMineTypeMessage =>{
+  const mineType =
+  msg.message?.imageMessage ||
+  msg.message?.audioMessage ||
+  msg.message?.videoMessage ||
+  msg.message?.stickerMessage ||
+  msg.message?.documentMessage ||
+  msg.message?.documentWithCaptionMessage?.message?.documentMessage ||
+  msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage ||
+  msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
+  return mineType;
+}
+
+const getMediaName = (msg: proto.IWebMessageInfo):string =>{
+  return msg.message?.documentMessage?.fileName ||
+  msg.message?.documentWithCaptionMessage?.message?.documentMessage.fileName || "";
+}
+
 const downloadMedia = async (msg: proto.IWebMessageInfo, isImported: Date = null) => {
 
   let buffer
@@ -390,18 +409,9 @@ const downloadMedia = async (msg: proto.IWebMessageInfo, isImported: Date = null
     // Trate o erro de acordo com as suas necessidades
   }
 
-  let filename = msg.message?.documentMessage?.fileName ||
-  msg.message?.documentWithCaptionMessage?.message?.documentMessage.fileName || "";
+  let filename = getMediaName(msg);
 
-  const mineType =
-    msg.message?.imageMessage ||
-    msg.message?.audioMessage ||
-    msg.message?.videoMessage ||
-    msg.message?.stickerMessage ||
-    msg.message?.documentMessage ||
-    msg.message?.documentWithCaptionMessage?.message?.documentMessage ||
-    msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage ||
-    msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
+  const mineType = getMineType(msg);
 
   if (!mineType)
     console.log(msg)

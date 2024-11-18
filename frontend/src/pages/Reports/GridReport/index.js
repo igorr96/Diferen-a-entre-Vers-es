@@ -41,7 +41,7 @@ import { UsersFilter } from "../../../components/UsersFilter";
 import { WhatsappsFilter } from "../../../components/WhatsappsFilter";
 import { StatusFilter } from "../../../components/StatusFilter";
 import useDashboard from "../../../hooks/useDashboard";
-
+import { TagsFilter } from '../../../components/TagsFilter';
 import QueueSelect from "../../../components/QueueSelect";
 import moment from "moment";
 
@@ -110,7 +110,7 @@ const GridReport = () => {
   const [selectedWhatsapp, setSelectedWhatsapp] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState([]);
 
-  // const [tagIds, setTagIds] = useState([]);
+  const [tagIds, setTagIds] = useState([]);
   const [queueIds, setQueueIds] = useState([]);
   const [userIds, setUserIds] = useState([]);
   const [options, setOptions] = useState([]);
@@ -143,10 +143,10 @@ const GridReport = () => {
     return () => clearTimeout(delayDebounceFn);
   }, []);
 
-  // const handleSelectedTags = (selecteds) => {
-  //   const tags = selecteds.map((t) => t.id);
-  //   setTagIds(tags);
-  // };
+  const handleSelectedTags = (selecteds) => {
+    const tags = selecteds.map((t) => t.id);
+    setTagIds(tags);
+  };
 
   const exportarGridParaExcel = async () => {
     setLoading(true); // Define o estado de loading como true durante o carregamento
@@ -158,7 +158,7 @@ const GridReport = () => {
         searchParam,
         contactId: selectedContactId,
         whatsappId: JSON.stringify(selectedWhatsapp),
-        // tags: JSON.stringify(tagIds),
+        tags: JSON.stringify(tagIds),
         users: JSON.stringify(userIds),
         queueIds: JSON.stringify(queueIds),
         status: JSON.stringify(selectedStatus),
@@ -224,7 +224,7 @@ const GridReport = () => {
         searchParam,
         contactId: selectedContactId,
         whatsappId: JSON.stringify(selectedWhatsapp),
-        // tags: JSON.stringify(tagIds),
+        tags: JSON.stringify(tagIds),
         users: JSON.stringify(userIds),
         queueIds: JSON.stringify(queueIds),
         status: JSON.stringify(selectedStatus),
@@ -366,9 +366,9 @@ const GridReport = () => {
             <Grid item xs={12} md={3} xl={3}>
               <UsersFilter onFiltered={handleSelectedUsers} />
             </Grid>
-            {/* <Grid item xs={12} md={4} xl={4}>
+            <Grid item xs={12} md={4} xl={4}>
               <TagsFilter onFiltered={handleSelectedTags} />
-            </Grid> */}
+            </Grid>
             <Grid item xs={12} md={3} xl={3} style={{ marginTop: '-13px' }}>
               <QueueSelect
                 selectedQueueIds={queueIds}

@@ -5,7 +5,7 @@ import { Picker } from "emoji-mart";
 import MicRecorder from "mic-recorder-to-mp3";
 import clsx from "clsx";
 
-
+import { Submenus } from "./submenu";
 import { green } from "@material-ui/core/colors";
 import AttachFileIcon from "@material-ui/icons/AttachFile";
 import MoodIcon from "@material-ui/icons/Mood";
@@ -327,6 +327,8 @@ const CustomInput = (props) => {
     handleSendMessage,
     handleInputPaste,
     disableOption,
+    setMediaUrl,
+    setMediaName
   } = props;
   const classes = useStyles();
   const [quickMessages, setQuickMessages] = useState([]);
@@ -439,6 +441,9 @@ const CustomInput = (props) => {
 
   return (
     <div className={classes.messageInputWrapper}>
+     <IconButton style={{ width: 50, boder:"2px solid red" }}>
+        <Submenus setInputMessage={setInputMessage} setMediaUrl={setMediaUrl} setMediaName={setMediaName} />
+      </IconButton>
       <Autocomplete
         freeSolo
         open={popupOpen}
@@ -503,6 +508,8 @@ const MessageInputCustom = (props) => {
   const [privateMessage, setPrivateMessage] = useState(false);
   const [onDragEnter, setOnDragEnter] = useState(false);
   const {get:getSetting} = useCompanySettings()
+  const [mediaUrl, setMediaUrl] = useState(null);
+  const [mediaName, setMediaName] = useState(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -902,6 +909,8 @@ const MessageInputCustom = (props) => {
             handleSendMessage={handleSendMessage}
             handleInputPaste={handleInputPaste}
             disableOption={disableOption}
+            setMediaUrl={setMediaUrl}
+            setMediaName={setMediaName}
           />
 
           <ActionButtons
