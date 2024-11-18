@@ -438,7 +438,7 @@ function InternalChat(props) {
           className={classes.speedDial}
           onClick={() => setShowDialogMessages(!showDialogMessages)}
           ariaLabel="SpeedDial basic example"
-          sx={{ position: 'absolute', bottom: 67, right: 16, }}
+          sx={{ position: 'absolute', bottom: 87, right: 16, }}
           icon={<BsChat size={20} />}
         />
       }
