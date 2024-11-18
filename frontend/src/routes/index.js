@@ -44,6 +44,7 @@ import Prompts from "../pages/Prompts";
 import ToDoList from "../pages/ToDoList/";
 import Kanban from "../pages/Kanban";
 import TagsKanban from "../pages/TagsKanban";
+import GridReport from '../pages/Reports/GridReport';
 
 const Routes = () => {
   const [showCampaigns, setShowCampaigns] = useState(false);
@@ -68,6 +69,7 @@ const Routes = () => {
               <LoggedInLayout>
                 <Route exact path="/companies" component={Companies} isPrivate />
                 <Route exact path="/" component={Dashboard} isPrivate />
+                <Route exact path="/reports" component={GridReport} isPrivate />
                 <Route exact path="/tickets/:ticketId?" component={TicketResponsiveContainer} isPrivate />
                 <Route exact path="/connections" component={Connections} isPrivate />
                 <Route exact path="/quick-messages" component={QuickMessages} isPrivate />

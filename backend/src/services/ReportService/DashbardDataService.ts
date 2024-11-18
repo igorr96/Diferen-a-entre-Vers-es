@@ -44,7 +44,7 @@ export default async function DashboardDataService(
           (date_part('hour', age(tt."startedAt", tt."createdAt")) * 60) +
           (date_part('minutes', age(tt."startedAt", tt."createdAt")))
         ), 0) "waitTime",
-        t.status,
+        t.status as "traking_status",
         tt.*,
         ct."id" "contactId"
       from "TicketTraking" tt
@@ -82,10 +82,10 @@ export default async function DashboardDataService(
             having count(tt1.id) = 1
           ) leads
         ) "leads",
-        (select count(id) from traking where "status" = 'closed') "tickets",
-        (select count(id) from traking where "status" = 'nps') "waitRating",
-        (select count(id) from traking where "status" = 'closed' and "rated" = false) "withoutRating",
-        (select count(id) from traking where "status" = 'closed' and "rated" = true) "withRating",
+        (select count(id) from traking where traking.traking_status = 'closed') "tickets",
+        (select count(id) from traking where traking.traking_status = 'nps') "waitRating",
+        (select count(id) from traking where traking.traking_status = 'closed' and "rated" = false) "withoutRating",
+        (select count(id) from traking where traking.traking_status = 'closed' and "rated" = true) "withRating",
         (((select count(id) from traking where "rated" = true)* 100) / nullif((select count(id) from traking),0)) "percRating",
         (select
           (100*count(tt.*))/NULLIF((select count(*) total from traking tt inner join "UserRatings" ur on ur."ticketId" = tt."ticketId" where rated= true),0)

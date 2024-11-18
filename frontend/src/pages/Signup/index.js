@@ -78,7 +78,7 @@ const UserSchema = Yup.object().shape({
 const SignUp = () => {
     const classes = useStyles();
     const history = useHistory();
-    const { getPlanList } = usePlans()
+    const { getPlanPublicList } = usePlans()
     const [plans, setPlans] = useState([])
     const [loading, setLoading] = useState(false);
 
@@ -95,7 +95,7 @@ const SignUp = () => {
     useEffect(() => {
         setLoading(true);
         const fetchData = async () => {
-            const planList = await getPlanList();
+            const planList = await getPlanPublicList({isPublic: true});
 
             setPlans(planList);
             setLoading(false);

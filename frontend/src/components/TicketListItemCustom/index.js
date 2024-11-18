@@ -550,7 +550,6 @@ const TicketListItemCustom = ({ ticket }) => {
                                             <br />
                                         )}
 
-                                        ""
                                     </>
                                 }
                                 <span className={classes.secondaryContentSecond} >

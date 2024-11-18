@@ -18,6 +18,7 @@ interface PlanData {
   useKanban?: boolean;
   useOpenAi?: boolean;
   useIntegration?: boolean;
+  isPublic?:boolean;
 }
 
 const UpdatePlanService = async (planData: PlanData): Promise<Plan> => {
@@ -36,7 +37,8 @@ const UpdatePlanService = async (planData: PlanData): Promise<Plan> => {
     useExternalApi,
     useKanban,
     useOpenAi,
-    useIntegration
+    useIntegration,
+    isPublic,
   } = planData;
 
   const plan = await Plan.findByPk(id);
@@ -60,7 +62,8 @@ const UpdatePlanService = async (planData: PlanData): Promise<Plan> => {
     useExternalApi,
     useKanban,
     useOpenAi,
-    useIntegration
+    useIntegration,
+    isPublic,
   });
 
   return plan;

@@ -307,7 +307,7 @@ const messages = {
 					expiresTicket: "Cerrar chats abiertos após *n* horas",
 					expiresTicketNPS: "Cerrar chats aguardando la evaluacion luego de x minutos",
 					maxUseBotQueuesNPS: "Cantidad máxima de veces que la evaluación será enviada",
-					closeLastMessageOptions1:"Del Agente/Cliente",
+					closeLastMessageOptions1:"Del Cliente",
 					closeLastMessageOptions2:"Del Agente",
 					
 					outOfHoursMessage: "Mensaje fuera de horario de atención",

@@ -12,6 +12,7 @@ import ListTicketsServiceKanban from "../services/TicketServices/ListTicketsServ
 
 import CreateLogTicketService from "../services/TicketServices/CreateLogTicketService";
 import ShowLogTicketService from "../services/TicketServices/ShowLogTicketService";
+import ListTicketsServiceReport from '../services/TicketServices/ListTicketsServiceReport';
 
 
 type IndexQuery = {
@@ -30,6 +31,20 @@ type IndexQuery = {
   whatsapps: string;
   statusFilter: string;
   isGroup?: string;
+};
+
+type IndexQueryReport = {
+  searchParam: string;
+  contactId: string;
+  whatsappId: string;
+  dateFrom: string;
+  dateTo: string;
+  status: string;
+  queueIds: string;
+  tags: string;
+  users: string;
+  page: string;
+  pageSize: string;
 };
 
 interface TicketData {
@@ -165,6 +180,62 @@ export const kanban = async (req: Request, res: Response): Promise<Response> => 
   });
 
   return res.status(200).json({ tickets, count, hasMore });
+};
+
+export const report = async (req: Request, res: Response): Promise<Response> => {
+  const {
+    searchParam,
+    contactId,
+    whatsappId: whatsappIdsStringified,
+    dateFrom,
+    dateTo,
+    status: statusStringified,
+    queueIds: queueIdsStringified,
+    tags: tagIdsStringified,
+    users: userIdsStringified,
+    page: pageNumber,
+    pageSize
+  } = req.query as IndexQueryReport;
+  const userId = req.user.id;
+  const { companyId } = req.user;
+  let queueIds: number[] = [];
+  let whatsappIds: string[] = [];
+  let tagsIds: number[] = [];
+  let usersIds: number[] = [];
+  let statusIds: string[] = [];
+  if (statusStringified) {
+    statusIds = JSON.parse(statusStringified);
+  }
+  if (whatsappIdsStringified) {
+    whatsappIds = JSON.parse(whatsappIdsStringified);
+  }
+  if (queueIdsStringified) {
+    queueIds = JSON.parse(queueIdsStringified);
+  }
+  if (tagIdsStringified) {
+    tagsIds = JSON.parse(tagIdsStringified);
+  }
+  if (userIdsStringified) {
+    usersIds = JSON.parse(userIdsStringified);
+  }
+  const { tickets, totalTickets } = await ListTicketsServiceReport(
+    companyId,
+    {
+      searchParam,
+      queueIds,
+      tags: tagsIds,
+      users: usersIds,
+      status: statusIds,
+      dateFrom,
+      dateTo,
+      userId,
+      contactId,
+      whatsappId: whatsappIds
+    },
+    +pageNumber,
+    +pageSize
+  );
+  return res.status(200).json({ tickets, totalTickets });
 };
 
 export const store = async (req: Request, res: Response): Promise<Response> => {

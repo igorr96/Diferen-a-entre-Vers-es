@@ -60,7 +60,7 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
       type: "autoClose"
     });
   };
-  
+
   const io = getIO();
   try {
 
@@ -75,12 +75,12 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
       const ticketTraking = await TicketTraking.findOne({
         where: {
           ticketId: ticket.id,
-          finishedAt: null,          
+          finishedAt: null,
         }
       })
 
       if (!whatsapp) return;
-      
+
       let {timeInactiveMessage, //tempo em minutos para aviso de inatividade
            expiresInactiveMessage, //mensage de encerramento por inatividade
            inactiveMessage, //mensagem de aviso de inatividade
@@ -89,28 +89,28 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
            whenExpiresTicket, //quando deve encerrar ticket por inatividade: 0-sempre 1-Somente se atendenten falou por ultimo
            complationMessage
       } = whatsapp
-      
-      
+
+
       // @ts-ignore: Unreachable code error
       if (expiresTicketNPS && expiresTicketNPS !== "" &&
         // @ts-ignore: Unreachable code error
         expiresTicketNPS !== "0" && Number(expiresTicketNPS) > 0) {
           const dataLimite = new Date()
           dataLimite.setMinutes(dataLimite.getMinutes() - Number(expiresTicketNPS));
-    
+
           if (ticket.status === "nps" ) {
-  
+
             const dataUltimaInteracaoChamado = new Date(showTicket.updatedAt)
-  
+
             if (dataUltimaInteracaoChamado < dataLimite) {
-  
+
               closeTicket(showTicket,  showTicket.status,  "");
 
               const bodyComplationMessage = formatBody(`\u200e${complationMessage}`, showTicket);
-              
+
               if (complationMessage !== "" && complationMessage !== undefined) {
                 const sentMessage = await SendWhatsAppMessage({ body: bodyComplationMessage, ticket: showTicket });
-  
+
                 await verifyMessage(sentMessage, showTicket, showTicket.contact);
               }
 
@@ -125,7 +125,7 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
                 action: "delete",
                 ticketId: showTicket.id
               });
-  
+
             }
           }
       }
@@ -137,12 +137,12 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
 
         //mensagem de encerramento por inatividade
         const bodyExpiresMessageInactive = formatBody(`\u200e${expiresInactiveMessage}`, showTicket);
-     
+
         const dataLimite = new Date()
         dataLimite.setMinutes(dataLimite.getMinutes() - Number(expiresTicket));
-	
+
         // @ts-ignore: Unreachable code error
-        if (timeInactiveMessage && timeInactiveMessage !== "" && timeInactiveMessage !== null && 
+        if (timeInactiveMessage && timeInactiveMessage !== "" && timeInactiveMessage !== null &&
         // @ts-ignore: Unreachable code error
         timeInactiveMessage !== "0" && Number(timeInactiveMessage) > 0) {
           dataLimite.setMinutes(dataLimite.getMinutes() - Number(timeInactiveMessage));
@@ -152,10 +152,10 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
 
           const dataUltimaInteracaoChamado = new Date(showTicket.updatedAt)
 
-          if (dataUltimaInteracaoChamado < dataLimite && (whenExpiresTicket === "0" || (whenExpiresTicket === "1" && showTicket.fromMe))) {
+          if (dataUltimaInteracaoChamado < dataLimite && ((whenExpiresTicket === "0" && !showTicket.fromMe) || (whenExpiresTicket === "1" && showTicket.fromMe))) {
 
             closeTicket(showTicket,  showTicket.status,  bodyExpiresMessageInactive);
-            
+
             if (expiresInactiveMessage !== "" && expiresInactiveMessage !== undefined) {
               const sentMessage = await SendWhatsAppMessage({ body: bodyExpiresMessageInactive, ticket: showTicket });
 
@@ -188,15 +188,15 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
 
         const dataLimite = new Date()
         dataLimite.setMinutes(dataLimite.getMinutes() - Number(timeInactiveMessage));
-	
+
         if (showTicket.status === "open" && !showTicket.isGroup) {
 
           const dataUltimaInteracaoChamado = new Date(showTicket.updatedAt)
 
-          if (dataUltimaInteracaoChamado < dataLimite && !showTicket.sendInactiveMessage && (whenExpiresTicket === "0" || (whenExpiresTicket === "1" && showTicket.fromMe))) {
+          if (dataUltimaInteracaoChamado < dataLimite && !showTicket.sendInactiveMessage && ((whenExpiresTicket === "0" && !showTicket.fromMe) || (whenExpiresTicket === "1" && showTicket.fromMe))) {
 
             const sentMessage = await SendWhatsAppMessage({ body: bodyMessageInactive, ticket: showTicket });
- 
+
             await verifyMessage(sentMessage, showTicket, showTicket.contact);
 
             await showTicket.update({

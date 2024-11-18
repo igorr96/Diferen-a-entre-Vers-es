@@ -20,6 +20,8 @@ import CompaniesSettings from "../../models/CompaniesSettings";
 import CreateLogTicketService from "./CreateLogTicketService";
 import TicketTag from "../../models/TicketTag";
 import Tag from "../../models/Tag";
+import FindCompanySettingOneService from '../CompaniesSettings/FindCompanySettingOneService';
+import formatBody from "../../helpers/Mustache";
 
 interface TicketData {
   status?: string;
@@ -127,7 +129,7 @@ const UpdateTicketService = async ({
         (!isNil(ratingMessage) && ratingMessage !== "") &&
         !ticket.isGroup) {
 
-        if (ticketTraking.ratingAt == null) {
+        if (ticketTraking.ratingAt) {
 
           const ratingTxt = ratingMessage || "";
           let bodyRatingMessage = `\u200e${ratingTxt}\n`;
@@ -146,6 +148,7 @@ const UpdateTicketService = async ({
           await ticketTraking.update({
             userId: ticket.userId,
             closedAt: moment().toDate()
+
           });
 
           await CreateLogTicketService({
@@ -235,7 +238,10 @@ const UpdateTicketService = async ({
       ticketTraking.closedAt = moment().toDate();
       ticketTraking.whatsappId = ticket.whatsappId;
       ticketTraking.userId = ticket.userId;
-
+      ticketTraking.contactId = ticket.contactId;
+      ticketTraking.queueId = ticket.queueId;
+      ticketTraking.lastMessage = lastMessage ? lastMessage : ticket.lastMessage;
+      ticketTraking.status = status;
 
       // queueId = null;
       // userId = null;
@@ -283,8 +289,24 @@ const UpdateTicketService = async ({
       return { ticket, oldStatus, oldUserId };
     }
 
-    if (!isNil(queueId)) {
-        ticketTraking.queuedAt = moment().toDate();
+
+    if (queueId !== undefined && queueId !== null) {
+      ticketTraking.update({
+        queuedAt: moment().toDate(),
+        status: status,
+        userId: ticket.userId,
+        contactId: ticket.contactId,
+        queueId: ticket.queueId,
+        lastMessage: lastMessage ? lastMessage : ticket.lastMessage,
+      })
+
+      // ticketTraking.queuedAt = moment().toDate();
+      // ticketTraking.lastMessage = lastMessage !== null ? lastMessage : ticket.lastMessage;
+      // ticketTraking.status = status;
+      // ticketTraking.userId = ticket.userId;
+      // ticketTraking.contactId = ticket.contactId;
+      // ticketTraking.queueId = ticket.queueId;
+      // ticketTraking.lastMessage = lastMessage ? lastMessage : ticket.lastMessage;
     }
 
     if (settings.sendMsgTransfTicket === "enabled") {
@@ -293,12 +315,22 @@ const UpdateTicketService = async ({
 
         const queue = await Queue.findByPk(queueId);
         const wbot = await GetTicketWbot(ticket);
-        const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}"*\nAguarde um momento, iremos atende-lo(a)!`;
+       // const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}"*\nAguarde um momento, iremos atende-lo(a)!`;
+        const tempSettingMessage = await FindCompanySettingOneService({companyId, column: "transferMessage"});
+        const settingMessage = tempSettingMessage[0];
 
+        let msgtxt = '';
+        if((settingMessage?.transferMessage?.trim() !== "") && settingMessage?.transferMessage){
+          msgtxt = `${settingMessage?.transferMessage}`;
+        }else{
+          msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}"*\nAguarde um momento, iremos atende-lo(a)!`;
+        }
+
+        const bodyMsg = formatBody(`${msgtxt}`, ticket);
         const queueChangedMessage = await wbot.sendMessage(
           `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
           {
-            text: msgtxt
+            text: bodyMsg
           }
         );
         await verifyMessage(queueChangedMessage, ticket, ticket.contact, ticketTraking);
@@ -308,12 +340,21 @@ const UpdateTicketService = async ({
         if (oldUserId !== userId && oldQueueId === queueId && !isNil(oldUserId) && !isNil(userId) && (!ticket.isGroup || groupAsTicket === "enabled")) {
           const wbot = await GetTicketWbot(ticket);
           const nome = await ShowUserService(ticketData.userId);
-          const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o atendente *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
+          //const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o atendente *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
+          const tempSettingMessage = await FindCompanySettingOneService({companyId, column: "transferMessage"});
+          const settingMessage = tempSettingMessage[0];
+          let msgtxt = '';
+          if((settingMessage?.transferMessage?.trim() !== "") && settingMessage?.transferMessage){
+            msgtxt = `${settingMessage?.transferMessage}`;
+          }else{
+            msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o atendente *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
+          }
 
+          const bodyMsg = formatBody(`${msgtxt}`, ticket);
           const queueChangedMessage = await wbot.sendMessage(
             `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
             {
-              text: msgtxt
+              text: bodyMsg
             }
           );
           await verifyMessage(queueChangedMessage, ticket, ticket.contact, ticketTraking);
@@ -324,12 +365,21 @@ const UpdateTicketService = async ({
             const wbot = await GetTicketWbot(ticket);
             const queue = await Queue.findByPk(queueId);
             const nome = await ShowUserService(ticketData.userId);
-            const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}* e será atendido por *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
+            //const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}* e será atendido por *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
+            const tempSettingMessage = await FindCompanySettingOneService({companyId, column: "transferMessage"});
+            const settingMessage = tempSettingMessage[0];
+            let msgtxt = '';
+            if((settingMessage?.transferMessage?.trim() !== "") && settingMessage?.transferMessage){
+              msgtxt = `${settingMessage?.transferMessage}`;
+            }else{
+              msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}* e será atendido por *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
+            }
 
+            const bodyMsg = formatBody(`${msgtxt}`, ticket);
             const queueChangedMessage = await wbot.sendMessage(
               `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
               {
-                text: msgtxt
+                text: bodyMsg
               }
             );
             await verifyMessage(queueChangedMessage, ticket, ticket.contact);
@@ -338,12 +388,22 @@ const UpdateTicketService = async ({
 
               const queue = await Queue.findByPk(queueId);
               const wbot = await GetTicketWbot(ticket);
-              const msgtxt = "*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *" + queue?.name + "*\nAguarde um momento, iremos atende-lo(a)!";
+             // const msgtxt = "*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *" + queue?.name + "*\nAguarde um momento, iremos atende-lo(a)!";
+              const tempSettingMessage = await FindCompanySettingOneService({companyId, column: "transferMessage"});
+              const settingMessage = tempSettingMessage[0];
 
+              let msgtxt = '';
+              if((settingMessage?.transferMessage?.trim() !== "") && settingMessage?.transferMessage){
+                msgtxt = `${settingMessage?.transferMessage}`;
+              }else{
+                msgtxt = "*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *" + queue?.name + "*\nAguarde um momento, iremos atende-lo(a)!";
+              }
+
+              const bodyMsg = formatBody(`${msgtxt}`, ticket);
               const queueChangedMessage = await wbot.sendMessage(
                 `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
                 {
-                  text: msgtxt
+                  text: bodyMsg
                 }
               );
               await verifyMessage(queueChangedMessage, ticket, ticket.contact);
@@ -415,8 +475,14 @@ const UpdateTicketService = async ({
       integrationId
     });
 
-    ticketTraking.queuedAt = moment().toDate();
-    ticketTraking.queueId = queueId;
+
+    ticketTraking.update({
+      queuedAt: moment().toDate(),
+      queueId: queueId,
+      userId: status !== "closed" ? userId : ticket.userId,
+      lastMessage: lastMessage ? lastMessage : ticket.lastMessage
+    })
+
 
     await ticket.reload();
 
@@ -429,8 +495,11 @@ const UpdateTicketService = async ({
       });
       ticketTraking.update({
         whatsappId: ticket.whatsappId,
+        queueAt: moment().toDate(),
         startedAt: null,
-        userId: null
+        userId: null,
+        queueId: null,
+        lastMessage: lastMessage ? lastMessage : ticket.lastMessage
       });
     }
 
@@ -441,7 +510,10 @@ const UpdateTicketService = async ({
         rated: false,
         whatsappId: ticket.whatsappId,
         userId: ticket.userId,
-        queueId: ticket.queueId
+        queueId: ticket.queueId,
+        contactId: ticket.contactId,
+        lastMessage: lastMessage ? lastMessage : ticket.lastMessage,
+        status
       });
 
       //loga inicio de atendimento

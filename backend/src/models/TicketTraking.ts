@@ -18,6 +18,7 @@ import Whatsapp from "./Whatsapp";
 import Rating from "./Files";
 import Message from "./Message";
 import Queue from "./Queue";
+import Contact from './Contact';
 
 @Table({
   tableName: "TicketTraking"
@@ -83,6 +84,13 @@ class TicketTraking extends Model<TicketTraking> {
   @Column
   chatbotAt: Date;
 
+  @Column
+  @ForeignKey(() => Contact)
+  contactId: number;
+
+  @BelongsTo(() => Contact)
+  contact: Contact;
+
   @ForeignKey(() => Queue)
   @Column
   queueId: number;
@@ -91,7 +99,13 @@ class TicketTraking extends Model<TicketTraking> {
   queue: Queue;
 
   @HasMany(() => Message)
-  message: Message[];  
+  message: Message[];
+
+  @Column
+  status: string;
+
+  @Column
+  lastMessage: string;
 }
 
 export default TicketTraking;

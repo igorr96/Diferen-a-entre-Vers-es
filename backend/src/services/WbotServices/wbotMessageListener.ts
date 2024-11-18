@@ -575,8 +575,7 @@ export const verifyMediaMessage = async (
             return;
           }
 
-          console.log("Input File:", inputFile);
-          console.log("Output File:", outputFile);
+
 
           return new Promise<void>((resolve, reject) => {
             ffmpeg(inputFile)
@@ -628,6 +627,10 @@ export const verifyMediaMessage = async (
 
     await ticket.update({
       lastMessage: body || media.filename
+    });
+
+    await ticketTraking.update({
+      lastMessage: body || media.filename,
     });
 
     const newMessage = await CreateMessageService({
@@ -705,6 +708,10 @@ export const verifyMessage = async (
 
   await ticket.update({
     lastMessage: body
+  });
+
+  await ticketTraking.update({
+    lastMessage: body,
   });
 
   await CreateMessageService({ messageData, companyId: companyId });
@@ -1464,7 +1471,12 @@ const verifyQueue = async (
         }
       }
       await ticketTraking.update({
-        chatbotAt: null
+        chatbotAt: null,
+        contactId: ticket.contactId,
+        status: ticket.status,
+        queueId: ticket.queueId,
+        userId: ticket.userId,
+        lastMessage: getBodyMessage(msg)
       })
 
 
@@ -1802,6 +1814,7 @@ export const handleRating = async (
     ticketId: ticketTraking.ticketId,
     companyId: ticketTraking.companyId,
     userId: ticketTraking.userId,
+    ticketTrakingId: ticketTraking.id,
     rate: finalRate,
   });
 

@@ -30,7 +30,7 @@ import ForumIcon from "@material-ui/icons/Forum";
 import LocalAtmIcon from '@material-ui/icons/LocalAtm';
 import BusinessIcon from '@material-ui/icons/Business';
 import ViewListOutlinedIcon from "@material-ui/icons/ViewListOutlined"
-import { AddToQueueRounded, AttachFile, CalendarToday, DeviceHubOutlined, ExploreOutlined, Label, AllInclusive } from '@material-ui/icons';
+import { AddToQueueRounded, AttachFile, CalendarToday, DeviceHubOutlined, ExploreOutlined, Label, AllInclusive, Description } from '@material-ui/icons';
 import { Ri24HoursFill } from "react-icons/ri";
 
 
@@ -273,11 +273,18 @@ const MainListItems = (props, { collapsed }) => {
         role={user.profile}
         perform="dashboard:view"
         yes={() => (
-          <ListItemLink
-            to="/"
-            primary="Dashboard"
-            icon={<DashboardOutlinedIcon />}
-          />
+          <>
+            <ListItemLink
+              to="/"
+              primary="Dashboard"
+              icon={<DashboardOutlinedIcon />}
+            />
+             <ListItemLink
+              to="/reports"
+              primary={i18n.t("mainDrawer.listItems.Gridreports")}
+              icon={<Description />}
+            />
+          </>
         )}
       />
       <ListItemLink

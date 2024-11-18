@@ -14,6 +14,7 @@ import FindAllPlanService from "../services/PlanService/FindAllPlanService";
 import DeletePlanService from "../services/PlanService/DeletePlanService";
 import User from "../models/User";
 import Company from "../models/Company";
+import FindAllPublicPlanService, { IParamsSearch } from '../services/PlanService/FindAllPublicPlanService';
 
 interface TokenPayload {
   id: string;
@@ -55,6 +56,7 @@ type UpdatePlanData = {
   useKanban?: boolean;
   useOpenAi?: boolean;
   useIntegration?: boolean;
+  isPublic?: boolean;
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
@@ -92,6 +94,12 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 export const list = async (req: Request, res: Response): Promise<Response> => {
   const plans: Plan[] = await FindAllPlanService();
 
+  return res.status(200).json(plans);
+};
+
+export const listPublic = async (req: Request, res: Response): Promise<Response> => {
+  const { isPublic } = req.query as IParamsSearch;
+  const plans: Plan[] = await FindAllPublicPlanService({isPublic});
   return res.status(200).json(plans);
 };
 
@@ -173,7 +181,8 @@ export const update = async (
     useExternalApi,
     useKanban,
     useOpenAi,
-    useIntegration
+    useIntegration,
+    isPublic
   } = planData;
 
   const authHeader = req.headers.authorization;
@@ -202,6 +211,7 @@ export const update = async (
       useKanban,
       useOpenAi,
       useIntegration,
+      isPublic
     });
     return res.status(200).json(plan);
   } else if (PlanCompany.toString() !== id) {

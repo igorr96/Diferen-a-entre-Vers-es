@@ -13,6 +13,7 @@ import {
 import Company from "./Company";
 import User from "./User";
 import Ticket from "./Ticket";
+import TicketTraking from './TicketTraking';
 
 @Table({ tableName: "UserRatings" })
 class UserRating extends Model<UserRating> {
@@ -50,6 +51,12 @@ class UserRating extends Model<UserRating> {
 
   @Column
   rate: number;
+
+  @Column
+  @ForeignKey(() => TicketTraking)
+  ticketTrakingId: number;
+  @BelongsTo(() => TicketTraking)
+  ticketTraking: TicketTraking;
 }
 
 export default UserRating;

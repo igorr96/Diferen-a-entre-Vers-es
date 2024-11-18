@@ -83,6 +83,7 @@ export function PlanManagerForm(props) {
         useKanban: true,
         useOpenAi: true,
         useIntegration: true,
+        isPublic: true,
     });
 
     useEffect(() => {
@@ -350,6 +351,24 @@ export function PlanManagerForm(props) {
                                 </Field>
                             </FormControl>
                         </Grid>
+
+                        {/* Plano Público */ }
+                        <Grid xs={12} sm={8} md={2} item>
+                            <FormControl margin="dense" variant="outlined" fullWidth>
+                                <InputLabel htmlFor="isPublic-selection">Público</InputLabel>
+                                <Field
+                                    as={Select}
+                                    id="isPublic-selection"
+                                    label="isPublic"
+                                    labelId="isPublic-selection-label"
+                                    name="isPublic"
+                                    margin="dense"
+                                >
+                                    <MenuItem value={true}>{i18n.t("plans.form.enabled")}</MenuItem>
+                                    <MenuItem value={false}>{i18n.t("plans.form.disabled")}</MenuItem>
+                                </Field>
+                            </FormControl>
+                        </Grid>
                         
                         <Grid sm={3} md={1} item>
                             <ButtonWithSpinner className={classes.fullWidth} loading={loading} onClick={() => onCancel()} variant="contained">
@@ -418,6 +437,10 @@ export function PlansManagerGrid(props) {
     const renderIntegration = (row) => {
         return row.useIntegration === false ? `${i18n.t("plans.form.no")}` : `${i18n.t("plans.form.yes")}`;
     };
+
+    const renderIsPublic = (row) => {
+        return row.isPublic === false ? `${i18n.t("plans.form.no")}` : `${i18n.t("plans.form.yes")}`;
+    };
     return (
         <Paper className={classes.tableContainer}>
             <Table
@@ -444,6 +467,7 @@ export function PlansManagerGrid(props) {
                         <TableCell align="center">Kanban</TableCell>
                         <TableCell align="center">OpenAI</TableCell>
                         <TableCell align="center">Integrações</TableCell>
+                        <TableCell align="center">Público</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -469,6 +493,7 @@ export function PlansManagerGrid(props) {
                             <TableCell align="center">{renderKanban(row)}</TableCell>
                             <TableCell align="center">{renderOpenAi(row)}</TableCell>
                             <TableCell align="center">{renderIntegration(row)}</TableCell>
+                            <TableCell align="center">{renderIsPublic(row)}</TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
@@ -500,6 +525,7 @@ export default function PlansManager() {
         useKanban: true,
         useOpenAi: true,
         useIntegration: true,
+        isPublic: true,
     })
 
     useEffect(() => {
@@ -569,6 +595,7 @@ export default function PlansManager() {
             useSchedules: true,
             useInternalChat: true,
             useExternalApi: true,
+            isPublic: true,
         })
     }
 
@@ -584,6 +611,7 @@ export default function PlansManager() {
         let useKanban = data.useKanban === false ? false : true
         let useOpenAi = data.useOpenAi === false ? false : true
         let useIntegration = data.useIntegration === false ? false : true
+        let isPublic = data.isPublic === false ? false : true
 
         setRecord({
             id: data.id,
@@ -602,6 +630,7 @@ export default function PlansManager() {
             useKanban,
             useOpenAi,
             useIntegration,
+            isPublic
         })
     }
 

@@ -320,7 +320,7 @@ const messages = {
           expiresTicket: "Encerrar chats abertos após x minutos",
           expiresTicketNPS: "Encerrar chats aguardando avaliação após x minutos",
           maxUseBotQueuesNPS: "Quantidade máxima de vezes que a avaliaçao vai ser enviada",
-          closeLastMessageOptions1: "Do atendente/Cliente",
+          closeLastMessageOptions1: "Do Cliente",
           closeLastMessageOptions2: "Do atendente",
           outOfHoursMessage: "Mensagem de fora de expediente",
           greetingMessage: "Mensagem de saudação",
@@ -758,7 +758,8 @@ const messages = {
             closed: "Fechado",
             pending: "Pendente",
           },
-          filterUsers: "Filtro por Usuarios"
+          filterUsers: "Filtro por Usuarios",
+          ticketsPerPage: "Tickets por página"
         },
         buttons: {
           showAll: "Todos",
@@ -864,7 +865,8 @@ const messages = {
           queueIntegration: "Integrações",
           prompts: "Open.Ai",
           version: "Versão",
-          kanban: "Kanban"
+          kanban: "Kanban",
+          Gridreports: "Relatórios",
         },
         appBar: {
           user: {
@@ -1253,6 +1255,27 @@ const messages = {
           deleteMessage:
             "Você tem certeza? Essa ação não pode ser revertida! e será removida das filas e conexões vinculadas",
         },
+      },
+      reportsGrid: {
+        title: "Relatórios de Atendimentos",
+        table: {
+          id: "Ticket",
+          user: "Usuário",
+          dateOpen: "Data Abertura",
+          dateClose: "Data Fechamento",
+          NPS: "NPS",
+          status: "Status",
+          whatsapp: "Conexão",
+          queue: "Fila",
+          actions: "Ações",
+          lastMessage: "Últ. Mensagem",
+          contact: "Cliente",
+          supportTime: "Tempo de Atendimento"
+        },
+        buttons: {
+          filter: "Aplicar Filtro",
+        },
+        searchPlaceholder: "Pesquisar...",
       },
       users: {
         title: "Usuários",
