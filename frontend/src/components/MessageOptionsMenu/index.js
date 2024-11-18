@@ -13,6 +13,7 @@ import toastError from "../../errors/toastError";
 import { useHistory } from "react-router-dom";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import ShowTicketOpen from "../ShowTicketOpenModal";
+import { EditMessageContext } from "../../context/EditingMessage/EditingMessageContext";
 
 const MessageOptionsMenu = ({
   message,
@@ -21,6 +22,11 @@ const MessageOptionsMenu = ({
   anchorEl,
   ticketGroup,
 }) => {
+
+  const editingContext = useContext(EditMessageContext);
+
+  const setEditingMessage = editingContext ? editingContext.setEditingMessage : null;
+
   const { setReplyingMessage } = useContext(ReplyMessageContext);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const { user } = useContext(AuthContext);
@@ -31,6 +37,11 @@ const MessageOptionsMenu = ({
   const [queueTicketOpen, setQueueTicketOpen] = useState("");
 
   const { showSelectMessageCheckbox, setShowSelectMessageCheckbox } = useContext(ForwardMessageContext);
+
+  const handleEditMessage = async () => {
+    setEditingMessage(message);
+    handleClose();
+  };
 
 
   const handleSaveTicket = async (contactId) => {
@@ -95,6 +106,15 @@ const MessageOptionsMenu = ({
 
   };
 
+  const isWithinFifteenMinutes = () => {
+    const fifteenMinutesInMilliseconds = 15 * 60 * 1000; // 15 minutos em milissegundos
+    const currentTime = new Date();
+    const messageTime = new Date(message.updatedAt);
+
+    // Verifica se a diferença entre o tempo atual e o tempo da mensagem é menor que 15 minutos
+    return currentTime - messageTime <= fifteenMinutesInMilliseconds;
+  };
+
   return (
     <>
       <ShowTicketOpen
@@ -139,6 +159,11 @@ const MessageOptionsMenu = ({
         <MenuItem onClick={handleSetShowSelectCheckbox}>
           {i18n.t("messageOptionsMenu.forward")}
         </MenuItem>
+        {message.fromMe && isWithinFifteenMinutes() && (
+          <MenuItem key="edit" onClick={handleEditMessage}>
+            {i18n.t("messageOptionsMenu.edit")}
+          </MenuItem>
+        )}
         {!message.fromMe && ticketGroup.isGroup && (
           <MenuItem onClick={() => handleSaveTicket(message?.contact?.id)}>
             {i18n.t("messageOptionsMenu.talkTo")}

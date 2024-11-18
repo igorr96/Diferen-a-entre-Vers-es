@@ -973,9 +973,10 @@ const MessagesList = ({
                     </>
                   )}
 
-                  <span className={classes.timestamp}>
-                    {message.isEdited ? "Editada " + format(parseISO(message.createdAt), "HH:mm") : format(parseISO(message.createdAt), "HH:mm")}
-                  </span>
+                  <span className={classes.timestamp}>  {message.isEdited ? "Editada " + format(parseISO(message.createdAt), "HH:mm") : format(parseISO(message.createdAt), "HH:mm")}  </span>
+
+
+
                 </div>
               </div>
             </React.Fragment>
@@ -1029,7 +1030,7 @@ const MessagesList = ({
 
                   {/* {message.isDeleted && (`🚫`)} */}
 
-                  {message.isEdited && (`Mensagem Editada`)}
+                  {/* {message.isEdited && (`Mensagem Editada`)} */}
 
                   {message.quotedMsg && renderQuotedMessage(message)}
 
@@ -1047,10 +1048,13 @@ const MessagesList = ({
                     </>
                   )}
 
-                  <span className={classes.timestamp}>
-                    {format(parseISO(message.createdAt), "HH:mm")}
-                    {renderMessageAck(message)}
-                  </span>
+                  {/* <span className={classes.timestamp}>   {format(parseISO(message.createdAt), "HH:mm")}  {renderMessageAck(message)}  </span> */}
+
+                  <span className={classes.timestamp}>   {message.isEdited ? "Editada " + format(parseISO(message.createdAt), "HH:mm") : format(parseISO(message.createdAt), "HH:mm")}</span>
+
+
+
+
                 </div>
               </div>
             </React.Fragment>

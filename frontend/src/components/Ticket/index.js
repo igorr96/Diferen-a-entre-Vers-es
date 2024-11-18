@@ -15,6 +15,7 @@ import MessagesList from "../MessagesList";
 import api from "../../services/api";
 import { ReplyMessageProvider } from "../../context/ReplyingMessage/ReplyingMessageContext";
 import { ForwardMessageContext, ForwardMessageProvider } from "../../context/ForwarMessage/ForwardMessageContext";
+import { EditMessageProvider } from "../../context/EditingMessage/EditingMessageContext";
 
 import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
@@ -205,7 +206,9 @@ const Ticket = () => {
         </Paper>
         <ReplyMessageProvider>
           <ForwardMessageProvider>
-            {renderMessagesList()}
+            <EditMessageProvider>
+              {renderMessagesList()}
+            </EditMessageProvider>
           </ForwardMessageProvider>
         </ReplyMessageProvider>
       </Paper>

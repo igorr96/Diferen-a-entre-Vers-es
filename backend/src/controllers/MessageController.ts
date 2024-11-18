@@ -33,6 +33,7 @@ import UpdateTicketService from "../services/TicketServices/UpdateTicketService"
 import ListSettingsService from "../services/SettingServices/ListSettingsService";
 import ShowMessageService, { GetWhatsAppFromMessage } from "../services/MessageServices/ShowMessageService";
 import CompaniesSettings from "../models/CompaniesSettings";
+import EditWhatsAppMessage from "../services/MessageServices/EditWhatsAppMessage";
 
 
 type IndexQuery = {
@@ -96,15 +97,15 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 
 function obterNomeEExtensaoDoArquivo(url) {
   const urlObj = new URL(url);
-  const  pathname = urlObj.pathname;
+  const pathname = urlObj.pathname;
   const filename = pathname.split('/').pop();
   // var parts = filename.split('.');
-  
+
   // var nomeDoArquivo = parts[0];
   // var extensao = parts[1];
 
   const extensao = path.extname(filename);
-  const nomeDoArquivo = filename.replace(extensao,"");
+  const nomeDoArquivo = filename.replace(extensao, "");
 
   return `${nomeDoArquivo}${extensao}`;
 }
@@ -491,3 +492,28 @@ export const send = async (req: Request, res: Response): Promise<Response> => {
     }
   }
 };
+
+export const edit = async (req: Request, res: Response): Promise<Response> => {
+  const { messageId } = req.params;
+  const { companyId } = req.user;
+  const { body }: MessageData = req.body;
+
+  const { ticket, message } = await EditWhatsAppMessage({ messageId, body });
+
+  const io = getIO();
+  io.to(String(ticket.id))
+    .emit(`company-${companyId}-appMessage`, {
+      action: "update",
+      message
+    });
+
+  io.to(ticket.status)
+    .to("notification")
+    .to(String(ticket.id))
+    .emit(`company-${companyId}-ticket`, {
+      action: "update",
+      ticket
+    });
+  return res.send();
+}
+

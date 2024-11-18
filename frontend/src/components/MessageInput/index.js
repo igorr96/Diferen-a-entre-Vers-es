@@ -73,7 +73,10 @@ import { private_excludeVariablesFromRoot } from "@mui/material";
 import { ForwardMessageContext } from "../../context/ForwarMessage/ForwardMessageContext";
 import { Submenus } from "./submenu";
 
+import { EditMessageContext } from "../../context/EditingMessage/EditingMessageContext";
+
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
+
 
 const useStyles = makeStyles((theme) => ({
   mainWrapper: {
@@ -313,8 +316,8 @@ const useStyles = makeStyles((theme) => ({
 const MessageInput = ({ ticketId, ticketStatus }) => {
   const classes = useStyles();
   const [medias, setMedias] = useState([]);
-  const [mediaUrl,setMediaUrl] = useState('');
-  const [mediaName,setMediaName] = useState('');
+  const [mediaUrl, setMediaUrl] = useState('');
+  const [mediaName, setMediaName] = useState('');
   const [inputMessage, setInputMessage] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -324,8 +327,8 @@ const MessageInput = ({ ticketId, ticketStatus }) => {
   const inputRef = useRef();
   const [onDragEnter, setOnDragEnter] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
-  const { setReplyingMessage, replyingMessage } =
-    useContext(ReplyMessageContext);
+  const { setReplyingMessage, replyingMessage } = useContext(ReplyMessageContext);
+
   const { user } = useContext(AuthContext);
   const [signMessagePar, setSignMessagePar] = useState(false);
   const { get: getSetting } = useCompanySettings();
@@ -334,13 +337,18 @@ const MessageInput = ({ ticketId, ticketStatus }) => {
   const [senVcardModalOpen, setSenVcardModalOpen] = useState(false);
 
   const { list: listQuickMessages } = useQuickMessages();
-   
+
   const { selectedMessages, setForwardMessageModalOpen, showSelectMessageCheckbox } = useContext(ForwardMessageContext);
+  const { setEditingMessage, editingMessage } = useContext(EditMessageContext);
+
 
 
   useEffect(() => {
     inputRef.current.focus();
-  }, [replyingMessage]);
+    if (editingMessage) {
+      setInputMessage(editingMessage.body);
+    }
+  }, [replyingMessage, editingMessage]);
 
   useEffect(() => {
     inputRef.current.focus();
@@ -501,8 +509,8 @@ const MessageInput = ({ ticketId, ticketStatus }) => {
       setLoading(false);
       return;
     }
-    try {    
-      medias.forEach(async(media) => {
+    try {
+      medias.forEach(async (media) => {
         const formData = new FormData();
         formData.append("fromMe", true);
         formData.append("isPrivate", privateMessage);
@@ -512,10 +520,10 @@ const MessageInput = ({ ticketId, ticketStatus }) => {
           :
           formData.append("body", "")
         await api.post(`/messages/${ticketId}`, formData);
-    });
-  } catch (err) {
-    toastError(err);
-  }
+      });
+    } catch (err) {
+      toastError(err);
+    }
 
     setLoading(false);
     setMedias([]);
@@ -565,7 +573,7 @@ const MessageInput = ({ ticketId, ticketStatus }) => {
       read: 1,
       fromMe: true,
       mediaUrl: "",
-      body: signMessage || privateMessage
+      body: (signMessage || privateMessage) && !editingMessage
         ? `*${userName}:*\n${inputMessage.trim()}`
         : inputMessage.trim(),
       quotedMsg: replyingMessage,
@@ -573,7 +581,11 @@ const MessageInput = ({ ticketId, ticketStatus }) => {
     };
 
     try {
-      await api.post(`/messages/${ticketId}`, message);
+      if (editingMessage !== null) {
+        await api.post(`/messages/edit/${editingMessage.id}`, message);
+      } else {
+        await api.post(`/messages/${ticketId}`, message);
+      }
     } catch (err) {
       toastError(err);
     }
@@ -584,6 +596,7 @@ const MessageInput = ({ ticketId, ticketStatus }) => {
     setReplyingMessage(null);
     setPrivateMessage(false);
     handleMenuItemClick();
+    setEditingMessage(null);
   };
 
   const handleStartRecording = async () => {
@@ -1070,7 +1083,7 @@ const MessageInput = ({ ticketId, ticketStatus }) => {
               </Menu>
             </Hidden>
             <div className={classes.messageInputWrapper}>
-              <IconButton style={{ width: 50, boder:"2px solid red" }}>
+              <IconButton style={{ width: 50, boder: "2px solid red" }}>
                 <Submenus setInputMessage={setInputMessage} setMediaUrl={setMediaUrl} setMediaName={setMediaName} />
               </IconButton>
               <InputBase

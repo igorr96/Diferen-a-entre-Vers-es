@@ -49,6 +49,7 @@ import {
 } from "@material-ui/core";
 import { AttachFile, Comment, Create } from "@material-ui/icons";
 import useCompanySettings from "../../hooks/useSettings/companySettings";
+import { EditMessageContext } from "../../context/EditingMessage/EditingMessageContext";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
@@ -92,7 +93,7 @@ const useStyles = makeStyles((theme) => ({
   },
 
   sendMessageIcons: {
-    color: "grey",    
+    color: "grey",
   },
 
   uploadInput: {
@@ -328,7 +329,8 @@ const CustomInput = (props) => {
     handleInputPaste,
     disableOption,
     setMediaUrl,
-    setMediaName
+    setMediaName,
+    editingMessage,
   } = props;
   const classes = useStyles();
   const [quickMessages, setQuickMessages] = useState([]);
@@ -366,6 +368,14 @@ const CustomInput = (props) => {
       }
     }
   };
+
+  useEffect(() => {
+    inputRef.current.focus();
+
+    if (editingMessage) {
+      setInputMessage(editingMessage.body);
+    }
+  }, [replyingMessage, editingMessage]);
 
   useEffect(() => {
     async function fetchData() {
@@ -441,7 +451,7 @@ const CustomInput = (props) => {
 
   return (
     <div className={classes.messageInputWrapper}>
-     <IconButton style={{ width: 50, boder:"2px solid red" }}>
+      <IconButton style={{ width: 50, boder: "2px solid red" }}>
         <Submenus setInputMessage={setInputMessage} setMediaUrl={setMediaUrl} setMediaName={setMediaName} />
       </IconButton>
       <Autocomplete
@@ -451,7 +461,7 @@ const CustomInput = (props) => {
         value={inputMessage}
         options={options}
         closeIcon={null}
-        getOptionLabel={(option) => { 
+        getOptionLabel={(option) => {
           if (isObject(option)) {
             return option.label;
           } else {
@@ -478,8 +488,8 @@ const CustomInput = (props) => {
               inputRef={setInputRef}
               placeholder={renderPlaceholder()}
               onKeyDown={handleKeyDown}
-              multiline           
-              maxRows={5}   
+              multiline
+              maxRows={5}
               value={inputMessage}
               variant="outlined"
             />
@@ -494,6 +504,8 @@ const MessageInputCustom = (props) => {
   const { ticketStatus, ticketId } = props;
   const classes = useStyles();
 
+  const { setEditingMessage, editingMessage } = useContext(EditMessageContext);
+
   const [medias, setMedias] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
@@ -504,18 +516,19 @@ const MessageInputCustom = (props) => {
     useContext(ReplyMessageContext);
   const { user } = useContext(AuthContext);
   const [signMessagePar, setSignMessagePar] = useState();
+
   const [signMessage, setSignMessage] = useState();
   const [privateMessage, setPrivateMessage] = useState(false);
   const [onDragEnter, setOnDragEnter] = useState(false);
-  const {get:getSetting} = useCompanySettings()
+  const { get: getSetting } = useCompanySettings()
   const [mediaUrl, setMediaUrl] = useState(null);
   const [mediaName, setMediaName] = useState(null);
 
   useEffect(() => {
     async function fetchData() {
       const setting = await getSetting({
-        "column":"sendSignMessage"
-    });
+        "column": "sendSignMessage"
+      });
 
       if (setting.sendSignMessage === "disabled") {
         setSignMessagePar(false)
@@ -546,8 +559,9 @@ const MessageInputCustom = (props) => {
       setShowEmoji(false);
       setMedias([]);
       setReplyingMessage(null);
+      setEditingMessage(null);
     };
-  }, [ticketId, setReplyingMessage]);
+  }, [ticketId, setReplyingMessage, setEditingMessage]);
 
   // const handleChangeInput = e => {
   // 	if (isObject(e) && has(e, 'value')) {
@@ -594,10 +608,7 @@ const MessageInputCustom = (props) => {
     formData.append("isPrivate", privateMessage);
     medias.forEach((media) => {
       formData.append("medias", media);
-      privateMessage ?
-        formData.append("body", `\u200d`)
-        :
-        formData.append("body", "")
+      privateMessage ? formData.append("body", `\u200d`) : formData.append("body", "")
     });
 
 
@@ -615,13 +626,13 @@ const MessageInputCustom = (props) => {
     if (inputMessage.trim() === "") return;
     setLoading(true);
 
-    const userName = privateMessage ? `${user.name} - Mensagem Privada`: user.name;
+    const userName = privateMessage ? `${user.name} - Mensagem Privada` : user.name;
 
     const message = {
       read: 1,
       fromMe: true,
       mediaUrl: "",
-      body: signMessage
+      body: signMessage && !editingMessage
         ? `*${userName}:*\n${inputMessage.trim()}`
         : inputMessage.trim(),
       quotedMsg: replyingMessage,
@@ -629,7 +640,12 @@ const MessageInputCustom = (props) => {
     };
 
     try {
-      await api.post(`/messages/${ticketId}`, message);
+      if (editingMessage !== null) {
+        await api.post(`/messages/edit/${editingMessage.id}`, message);
+      } else {
+
+        await api.post(`/messages/${ticketId}`, message);
+      }
     } catch (err) {
       toastError(err);
     }
@@ -638,8 +654,9 @@ const MessageInputCustom = (props) => {
     setShowEmoji(false);
     setLoading(false);
     setReplyingMessage(null);
+    setEditingMessage(null);
   };
-  
+
   const handleInputDrop = (e) => {
     e.preventDefault();
     if (e.dataTransfer.files[0]) {
@@ -773,9 +790,9 @@ const MessageInputCustom = (props) => {
 
   if (medias.length > 0)
     return (
-      <Paper 
-        elevation={0} 
-        square 
+      <Paper
+        elevation={0}
+        square
         className={classes.viewMediaInputWrapper}
         onDragEnter={() => setOnDragEnter(true)}
         onDrop={(e) => handleInputDrop(e)}
@@ -840,8 +857,8 @@ const MessageInputCustom = (props) => {
     );
   else {
     return (
-      <Paper 
-        square elevation={0} 
+      <Paper
+        square elevation={0}
         className={classes.mainWrapper}
         onDragEnter={() => setOnDragEnter(true)}
         onDrop={(e) => handleInputDrop(e)}
@@ -857,47 +874,47 @@ const MessageInputCustom = (props) => {
             showEmoji={showEmoji}
             setShowEmoji={setShowEmoji}
           />
-          <br/>
+          <br />
           <input
-              multiple
-              type="file"
-              id="upload-button"
+            multiple
+            type="file"
+            id="upload-button"
+            disabled={loading || recording || (ticketStatus !== "open" && ticketStatus !== "group")}
+            className={classes.uploadInput}
+            onChange={handleChangeMedias}
+          />
+          <label htmlFor="upload-button">
+            <IconButton
+              aria-label="upload"
+              component="span"
               disabled={loading || recording || (ticketStatus !== "open" && ticketStatus !== "group")}
-              className={classes.uploadInput}
-              onChange={handleChangeMedias}
-            />
-            <label htmlFor="upload-button">
-              <IconButton
-                aria-label="upload"
-                component="span"
-                disabled={loading || recording || (ticketStatus !== "open" && ticketStatus !== "group")}
-                // onMouseOver={() => setOnDragEnter(true)}
-              >
-                <AttachFile className={classes.sendMessageIcons} />
-              </IconButton>
-            </label>
+            // onMouseOver={() => setOnDragEnter(true)}
+            >
+              <AttachFile className={classes.sendMessageIcons} />
+            </IconButton>
+          </label>
 
-           {signMessagePar && (
+          {signMessagePar && (
             <Tooltip title="Habilitar/Desabilitar Assinatura">
-                <IconButton 
-                  aria-label="send-upload"
-                  component="span"
-                  onClick={handleChangeSign}
-                  
-                >
+              <IconButton
+                aria-label="send-upload"
+                component="span"
+                onClick={handleChangeSign}
+
+              >
                 {signMessage === true ? <Create style={{ color: "#065183" }} /> : <Create style={{ color: "grey" }} />}
               </IconButton>
             </Tooltip>
-            )}
+          )}
           <Tooltip title="Habilitar/Desabilitar Comentários">
-            <IconButton 
-                aria-label="send-upload"
-                component="span"
-                onClick={handlePrivateMessage}
-              >
+            <IconButton
+              aria-label="send-upload"
+              component="span"
+              onClick={handlePrivateMessage}
+            >
               {privateMessage === true ? <Comment style={{ color: "#065183" }} /> : <Comment style={{ color: "grey" }} />}
             </IconButton>
-          </Tooltip>            
+          </Tooltip>
 
           <CustomInput
             loading={loading}
@@ -909,6 +926,7 @@ const MessageInputCustom = (props) => {
             handleSendMessage={handleSendMessage}
             handleInputPaste={handleInputPaste}
             disableOption={disableOption}
+            editingMessage={editingMessage}
             setMediaUrl={setMediaUrl}
             setMediaName={setMediaName}
           />

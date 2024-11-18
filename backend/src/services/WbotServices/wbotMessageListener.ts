@@ -99,7 +99,7 @@ interface IMe {
   id: string;
 }
 
-type IMineTypeMessage  = proto.Message.IDocumentMessage | proto.Message.IImageMessage | proto.Message.IAudioMessage | proto.Message.IVideoMessage | proto.Message.IStickerMessage;
+type IMineTypeMessage = proto.Message.IDocumentMessage | proto.Message.IImageMessage | proto.Message.IAudioMessage | proto.Message.IVideoMessage | proto.Message.IStickerMessage;
 const writeFileAsync = promisify(writeFile);
 
 function removeFile(directory) {
@@ -263,7 +263,6 @@ const msgLocation = (image, latitude, longitude) => {
 export const getBodyMessage = (msg: proto.IWebMessageInfo): string | null => {
   try {
     let type = getTypeMessage(msg);
-    if (type === undefined) console.log(msg)
 
     const types = {
       conversation: msg.message?.conversation,
@@ -289,7 +288,9 @@ export const getBodyMessage = (msg: proto.IWebMessageInfo): string | null => {
       senderKeyDistributionMessage: msg?.message?.senderKeyDistributionMessage?.axolotlSenderKeyDistributionMessage,
       documentWithCaptionMessage: msg.message?.documentWithCaptionMessage?.message?.documentMessage?.caption,
       viewOnceMessageV2: msg.message?.viewOnceMessageV2?.message?.imageMessage?.caption,
-      editedMessage: msg.message?.editedMessage?.message?.extendedTextMessage?.text,
+      editedMessage: msg?.message?.protocolMessage?.editedMessage?.conversation || msg.message?.editedMessage?.message?.protocolMessage?.editedMessage?.conversation || msg.message?.editedMessage?.message?.extendedTextMessage?.text,
+      protocolMessage: msg.message?.protocolMessage?.type || msg.message?.ephemeralMessage?.message?.protocolMessage?.type || msg?.message?.protocolMessage?.editedMessage?.conversation,
+      // editedMessage: msg.message?.editedMessage?.message?.extendedTextMessage?.text,
       ephemeralMessage: msg.message?.ephemeralMessage?.message?.extendedTextMessage?.text
     };
 
@@ -371,22 +372,22 @@ const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
     };
 };
 
-const getMineType = (msg: proto.IWebMessageInfo):IMineTypeMessage =>{
+const getMineType = (msg: proto.IWebMessageInfo): IMineTypeMessage => {
   const mineType =
-  msg.message?.imageMessage ||
-  msg.message?.audioMessage ||
-  msg.message?.videoMessage ||
-  msg.message?.stickerMessage ||
-  msg.message?.documentMessage ||
-  msg.message?.documentWithCaptionMessage?.message?.documentMessage ||
-  msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage ||
-  msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
+    msg.message?.imageMessage ||
+    msg.message?.audioMessage ||
+    msg.message?.videoMessage ||
+    msg.message?.stickerMessage ||
+    msg.message?.documentMessage ||
+    msg.message?.documentWithCaptionMessage?.message?.documentMessage ||
+    msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage ||
+    msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
   return mineType;
 }
 
-const getMediaName = (msg: proto.IWebMessageInfo):string =>{
+const getMediaName = (msg: proto.IWebMessageInfo): string => {
   return msg.message?.documentMessage?.fileName ||
-  msg.message?.documentWithCaptionMessage?.message?.documentMessage.fileName || "";
+    msg.message?.documentWithCaptionMessage?.message?.documentMessage.fileName || "";
 }
 
 const downloadMedia = async (msg: proto.IWebMessageInfo, isImported: Date = null) => {
@@ -639,7 +640,7 @@ export const verifyMediaMessage = async (
       lastMessage: body || media.filename
     });
 
-    if(!!ticketTraking){
+    if (!!ticketTraking) {
       await ticketTraking.update({
         lastMessage: body || media.filename,
       });
@@ -722,7 +723,7 @@ export const verifyMessage = async (
     lastMessage: body
   });
 
-  if(!!ticketTraking){
+  if (!!ticketTraking) {
     await ticketTraking.update({
       lastMessage: body,
     });
@@ -1949,39 +1950,39 @@ export const handleMessageIntegration = async (
   }
 }
 
-const IsMessageForwarded = (msg:proto.IWebMessageInfo):boolean =>{
+const IsMessageForwarded = (msg: proto.IWebMessageInfo): boolean => {
   const isMsgForwarded =
-  msg.message?.extendedTextMessage?.contextInfo?.isForwarded ||
-  msg.message?.imageMessage?.contextInfo?.isForwarded ||
-  msg.message?.audioMessage?.contextInfo?.isForwarded ||
-  msg.message?.videoMessage?.contextInfo?.isForwarded ||
-  msg.message?.documentMessage?.contextInfo?.isForwarded
+    msg.message?.extendedTextMessage?.contextInfo?.isForwarded ||
+    msg.message?.imageMessage?.contextInfo?.isForwarded ||
+    msg.message?.audioMessage?.contextInfo?.isForwarded ||
+    msg.message?.videoMessage?.contextInfo?.isForwarded ||
+    msg.message?.documentMessage?.contextInfo?.isForwarded
 
   return isMsgForwarded;
 }
 
-const hasMediaMessage = (msg: proto.IWebMessageInfo):boolean => {
+const hasMediaMessage = (msg: proto.IWebMessageInfo): boolean => {
   const hasMedia =
-      msg.message?.audioMessage ||
-      msg.message?.imageMessage ||
-      msg.message?.videoMessage ||
-      msg.message?.documentMessage ||
-      msg.message.stickerMessage ||
-      // msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage ||
-      // msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage ||
-      // msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.audioMessage ||
-      msg?.message?.ephemeralMessage?.message?.imageMessage ||
-      msg?.message?.ephemeralMessage?.message?.audioMessage ||
-      msg?.message?.ephemeralMessage?.message?.videoMessage ||
-      msg?.message?.ephemeralMessage?.message?.documentMessage ||
-      msg?.message?.ephemeralMessage?.message?.stickerMessage ||
-      msg.message?.viewOnceMessage?.message?.imageMessage ||
-      msg.message?.viewOnceMessage?.message?.videoMessage ||
-      msg.message?.ephemeralMessage?.message?.viewOnceMessage?.message?.imageMessage ||
-      msg.message?.ephemeralMessage?.message?.viewOnceMessage?.message?.videoMessage ||
-      msg.message?.documentWithCaptionMessage?.message?.documentMessage;
+    msg.message?.audioMessage ||
+    msg.message?.imageMessage ||
+    msg.message?.videoMessage ||
+    msg.message?.documentMessage ||
+    msg.message.stickerMessage ||
+    // msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage ||
+    // msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage ||
+    // msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.audioMessage ||
+    msg?.message?.ephemeralMessage?.message?.imageMessage ||
+    msg?.message?.ephemeralMessage?.message?.audioMessage ||
+    msg?.message?.ephemeralMessage?.message?.videoMessage ||
+    msg?.message?.ephemeralMessage?.message?.documentMessage ||
+    msg?.message?.ephemeralMessage?.message?.stickerMessage ||
+    msg.message?.viewOnceMessage?.message?.imageMessage ||
+    msg.message?.viewOnceMessage?.message?.videoMessage ||
+    msg.message?.ephemeralMessage?.message?.viewOnceMessage?.message?.imageMessage ||
+    msg.message?.ephemeralMessage?.message?.viewOnceMessage?.message?.videoMessage ||
+    msg.message?.documentWithCaptionMessage?.message?.documentMessage;
 
-    return !!hasMedia
+  return !!hasMedia
 }
 
 const handleMessage = async (
@@ -2010,6 +2011,7 @@ const handleMessage = async (
     i++
   }
 
+
   let mediaSent: Message | undefined;
 
   if (!isValidMsg(msg)) {
@@ -2025,7 +2027,8 @@ const handleMessage = async (
 
     let bodyMessage = getBodyMessage(msg);
     const msgType = getTypeMessage(msg);
-    if (msgType === "protocolMessage") return; // Tratar isso no futuro para excluir msgs se vor REVOKE
+
+    // if (msgType === "protocolMessage") return; // Tratar isso no futuro para excluir msgs se vor REVOKE
 
     const hasMedia = hasMediaMessage(msg);
 
@@ -2131,10 +2134,10 @@ const handleMessage = async (
     }
 
     if (
-        !msg.key.fromMe &&
-        !contact.disableBot &&
-        whatsapp?.integrationId > 0
-      ) {
+      !msg.key.fromMe &&
+      !contact.disableBot &&
+      whatsapp?.integrationId > 0
+    ) {
       const integration = await ShowQueueIntegrationService(whatsapp.integrationId, companyId);
 
       await handleMessageIntegration(msg, wbot, companyId, integration, ticket);
@@ -2149,10 +2152,49 @@ const handleMessage = async (
 
 
     // console.log(ticket)
-    if (msgType === "editedMessage") {
-      const msgKeyIdEdited = msg.message.editedMessage.message.protocolMessage.key.id;
-      const bodyEdited = msg.message.editedMessage.message.protocolMessage.editedMessage.conversation;
+
+
+    // if (msgType === "editedMessage" || msgType === "protocolMessage") {
+
+
+    //   const msgKeyIdEdited = msg.message.editedMessage.message.protocolMessage.key.id;
+    //   const bodyEdited = msg.message.editedMessage.message.protocolMessage.editedMessage.conversation;
+    //   const io = getIO();
+    //   try {
+    //     const messageToUpdate = await Message.findOne({
+    //       where: {
+    //         wid: msgKeyIdEdited,
+    //         companyId,
+    //         ticketId: ticket.id
+    //       }
+    //     })
+
+    //     if (!messageToUpdate) return
+
+    //     await messageToUpdate.update({ isEdited: true, body: bodyEdited });
+
+    //     await ticket.update({ lastMessage: bodyEdited })
+
+    //     io.to(messageToUpdate.ticketId.toString()).emit(
+    //       `company-${messageToUpdate.companyId}-appMessage`,
+    //       {
+    //         action: "update",
+    //         message: messageToUpdate
+    //       }
+    //     );
+    //   } catch (err) {
+    //     Sentry.captureException(err);
+    //     logger.error(`Error handling message ack. Err: ${err}`);
+    //   }
+    //   return
+    // }
+
+    if (msgType === "editedMessage" || msgType === "protocolMessage") {
+
+      const msgKeyIdEdited = msgType === "editedMessage" ? msg.message.editedMessage.message.protocolMessage.key.id : msg.message?.protocolMessage.key.id;
+      const bodyEdited = msgType === "editedMessage" ? msg.message.editedMessage.message.protocolMessage.editedMessage.conversation : msg.message.protocolMessage?.editedMessage?.extendedTextMessage?.text || msg.message.protocolMessage?.editedMessage?.conversation;
       const io = getIO();
+
       try {
         const messageToUpdate = await Message.findOne({
           where: {
@@ -2168,13 +2210,26 @@ const handleMessage = async (
 
         await ticket.update({ lastMessage: bodyEdited })
 
-        io.to(messageToUpdate.ticketId.toString()).emit(
-          `company-${messageToUpdate.companyId}-appMessage`,
-          {
+        // await ticketTraking.update({
+        //   lastMessage: bodyEdited,
+        // });
+
+        io.to(messageToUpdate.ticketId.toString())
+          .to(ticket.status)
+          .emit(`company-${companyId}-appMessage`, {
             action: "update",
-            message: messageToUpdate
-          }
-        );
+            message: messageToUpdate,
+            ticket: ticket,
+            contact: ticket.contact
+          });
+
+        io.to(ticket.status)
+          .to("notification")
+          .to(String(ticket.id))
+          .emit(`company-${companyId}-ticket`, {
+            action: "update",
+            ticket
+          });
       } catch (err) {
         Sentry.captureException(err);
         logger.error(`Error handling message ack. Err: ${err}`);
@@ -2652,11 +2707,11 @@ const handleMessage = async (
     }
 
     if (
-        ticket.queue &&
-        ticket.queueId &&
-        !contact.disableBot &&
-        !msg.key.fromMe
-      ) {
+      ticket.queue &&
+      ticket.queueId &&
+      !contact.disableBot &&
+      !msg.key.fromMe
+    ) {
       if (!ticket.user || ticket.queue?.chatbots?.length > 0) {
         await sayChatbot(ticket.queueId, wbot, ticket, contact, msg);
       }
@@ -2798,6 +2853,9 @@ const verifyCampaignMessageAndCloseTicket = async (message: proto.IWebMessageInf
 };
 
 const filterMessages = (msg: WAMessage): boolean => {
+
+  if (msg.message?.protocolMessage?.editedMessage) return true;
+
   if (msg.message?.protocolMessage) return false;
 
   if (
@@ -2815,9 +2873,12 @@ const filterMessages = (msg: WAMessage): boolean => {
 
 const wbotMessageListener = (wbot: Session, companyId: number): void => {
   wbot.ev.on("messages.upsert", async (messageUpsert: ImessageUpsert) => {
+
     const messages = messageUpsert.messages
       .filter(filterMessages)
       .map(msg => msg);
+
+
 
     if (!messages) return;
 
@@ -2830,7 +2891,9 @@ const wbotMessageListener = (wbot: Session, companyId: number): void => {
       if (!messageExists) {
         let isCampaign = false
         let body = await getBodyMessage(message);
+
         const fromMe = message?.key?.fromMe;
+
         if (fromMe) {
           isCampaign = /\u200c/.test(body)
         } else {
@@ -2868,6 +2931,8 @@ const wbotMessageListener = (wbot: Session, companyId: number): void => {
   });
 
   wbot.ev.on("messages.update", (messageUpdate: WAMessageUpdate[]) => {
+
+
     if (messageUpdate.length === 0) return;
     messageUpdate.forEach(async (message: WAMessageUpdate) => {
 
