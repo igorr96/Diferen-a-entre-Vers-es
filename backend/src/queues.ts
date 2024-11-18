@@ -84,7 +84,9 @@ export const messageQueue = new BullQueue("MessageQueue", connection, {
 
 async function handleSendMessage(job) {
   try {
+
     const { data } = job;
+    console.log("123: ",data.whatsappId);
 
     const whatsapp = await Whatsapp.findByPk(data.whatsappId);
 
@@ -596,7 +598,7 @@ async function handleDispatchCampaign(job) {
       if (campaign.mediaPath) {
         const publicFolder = path.resolve(__dirname, "..", "public");
         const filePath = path.join(publicFolder, `company${campaign.companyId}`, campaign.mediaPath);
-        
+
         const options = await getMessageOptions(campaign.mediaName, filePath, campaign.companyId.toString());
         if (Object.keys(options).length) {
           await wbot.sendMessage(chatId, { ...options });
@@ -628,7 +630,7 @@ function obterNomeEExtensaoDoArquivo(url) {
   const  pathname = urlObj.pathname;
   const filename = pathname.split('/').pop();
   // var parts = filename.split('.');
-  
+
   // var nomeDoArquivo = parts[0];
   // var extensao = parts[1];
 
@@ -759,7 +761,7 @@ async function handleVerifyQueue(job) {
 
                   await ticket.reload();
 
-                  const io = getIO(); 
+                  const io = getIO();
                   io.to(ticket.status)
                     .to("notification")
                     .to(ticket.id.toString())
@@ -795,7 +797,7 @@ async function handleVerifyQueue(job) {
 
 async function handleRandomUser() {
   logger.info("Iniciando a randomização dos atendimentos...");
-  
+
   const jobR = new CronJob('*/5 * * * * *', async () => {
 
   try {
@@ -818,25 +820,26 @@ async function handleRandomUser() {
         },
       ],
     });
-  
+
     //logger.info(`Localizado: ${count} filas para randomização.`);
-  
+
   	const getRandomUserId = (userIds) => {
   	  const randomIndex = Math.floor(Math.random() * userIds.length);
   	  return userIds[randomIndex];
 	};
-  
+
     // Function to fetch the User record by userId
 	const findUserById = async (userId) => {
+
   	  try {
     	const user = await User.findOne({
       	  where: {
         	id: userId
       	  },
     	});
-      
+
       	//console.log(user);
-      
+
         if(user.profile === "user"){
         	logger.info("USER");
         		if(user.online === true){
@@ -849,7 +852,7 @@ async function handleRandomUser() {
         	logger.info("ADMIN");
         	return 0;
         }
-  	  
+
       } catch (errorV) {
     	Sentry.captureException(errorV);
         logger.error("SearchForUsersRandom -> VerifyUsersRandom: error", errorV.message);
@@ -867,93 +870,96 @@ async function handleRandomUser() {
           queueId: queueId,
           },
         });
-      
+
         const contact = await ShowContactService(ticket.contactId, ticket.companyId);
 
         // Extract the userIds from the UserQueue records
-        const userIds = userQueues.map((userQueue) => userQueue.userId);      
-    
+
+        const userIds = userQueues.map((userQueue) => userQueue.userId);
+
         const tempoPassadoB = moment().subtract(tempoRoteador, "minutes").utc().toDate();
-		const updatedAtV = new Date(ticket.updatedAt);
-      
+		    const updatedAtV = new Date(ticket.updatedAt);
+
+        if(userIds?.length > 0){
+
           if (!userId) {
             // ticket.userId is null, randomly select one of the provided userIds
             const randomUserId = getRandomUserId(userIds);
-          
+
           	if(await findUserById(randomUserId) > 0){
               // Update the ticket with the randomly selected userId
               //ticket.userId = randomUserId;
               //ticket.save();
-            
+
               const ticketToSend = await ShowTicketService(ticket.id, ticket.companyId);
               const msg = await SendWhatsAppMessage({ body: "*Assistente Virtual*:\nAguarde enquanto localizamos um atendente... Você será atendido em breve!", ticket: ticketToSend });
-                
+
               await UpdateTicketService({
               	ticketData: { status: "open", userId: randomUserId },
                 ticketId: ticket.id,
                 companyId: ticket.companyId,
-                
+
               });
-            
-              
-           
+
+
+
               //await ticket.reload();
               logger.info(`Ticket ID ${ticket.id} updated with UserId ${randomUserId} - ${ticket.updatedAt}`);
             }else{
-              //logger.info(`Ticket ID ${ticket.id} NOT updated with UserId ${randomUserId} - ${ticket.updatedAt}`);            
+              //logger.info(`Ticket ID ${ticket.id} NOT updated with UserId ${randomUserId} - ${ticket.updatedAt}`);
             }
-          
+
           } else if (userIds.includes(userId)) {
-            
-          
+
+
             //console.log(tempoPassadoB);
             //console.log(updatedAtV);
             if(tempoPassadoB > updatedAtV){
-            
+
               // ticket.userId is present and is in userIds, exclude it from random selection
               const availableUserIds = userIds.filter((id) => id !== userId);
 
               if (availableUserIds.length > 0) {
                 // Randomly select one of the remaining userIds
                 const randomUserId = getRandomUserId(availableUserIds);
-              
+
               	if(await findUserById(randomUserId) > 0){
                   // Update the ticket with the randomly selected userId
                   //ticket.userId = randomUserId;
                   //ticket.save();
-                
+
                   const ticketToSend = await ShowTicketService(ticket.id, ticket.companyId);
                   const msg = await SendWhatsAppMessage({ body: "*Assistente Virtual*:\nAguarde enquanto localizamos um atendente... Você será atendido em breve!", ticket: ticketToSend });
-                
+
                   await UpdateTicketService({
                     ticketData: { status: "open", userId: randomUserId },
                     ticketId: ticket.id,
                     companyId: ticket.companyId,
-                
+
               	  });
-                
-                                    
-                
+
+
+
                   await ticket.reload();
                   //logger.info(`Ticket ID ${ticket.id} updated with UserId ${randomUserId} - ${ticket.updatedAt}`);
                 }else{
-              	  //logger.info(`Ticket ID ${ticket.id} NOT updated with UserId ${randomUserId} - ${ticket.updatedAt}`);            
+              	  //logger.info(`Ticket ID ${ticket.id} NOT updated with UserId ${randomUserId} - ${ticket.updatedAt}`);
             	}
-          
+
               } else {
-        
+
                 //logger.info(`Ticket ID ${ticket.id} has no other available UserId.`);
-      
+
               }
-            
+
             }else{
               //logger.info(`Ticket ID ${ticket.id} has a valid UserId ${userId} IN TIME ${tempoRoteador}.`);
             }
-    
+
           } else {
             //logger.info(`Ticket ID ${ticket.id} has a valid UserId ${userId}.`);
           }
-      
+        }
       }
     }
   } catch (e) {
@@ -961,7 +967,7 @@ async function handleRandomUser() {
     logger.error("SearchForUsersRandom -> VerifyUsersRandom: error", e.message);
     throw e;
   }
-  
+
   });
 
   jobR.start();
