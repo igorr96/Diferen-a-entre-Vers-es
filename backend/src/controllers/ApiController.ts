@@ -226,9 +226,6 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   const [, token] = authHeader.split(" ");
   const whatsapp = await Whatsapp.findOne({ where: { token } });
   const companyId = whatsapp.companyId;
-
-  console.log("entrou aqui api", userId, queueId, sendSignature, closeTicket)
-
   newContact.number = newContact.number.replace("-", "").replace(" ", "");
 
   const schema = Yup.object().shape({

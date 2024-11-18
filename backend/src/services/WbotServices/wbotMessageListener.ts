@@ -629,9 +629,11 @@ export const verifyMediaMessage = async (
       lastMessage: body || media.filename
     });
 
-    await ticketTraking.update({
-      lastMessage: body || media.filename,
-    });
+    if(!!ticketTraking){
+      await ticketTraking.update({
+        lastMessage: body || media.filename,
+      });
+    }
 
     const newMessage = await CreateMessageService({
       messageData,
@@ -710,9 +712,11 @@ export const verifyMessage = async (
     lastMessage: body
   });
 
-  await ticketTraking.update({
-    lastMessage: body,
-  });
+  if(!!ticketTraking){
+    await ticketTraking.update({
+      lastMessage: body,
+    });
+  }
 
   await CreateMessageService({ messageData, companyId: companyId });
 
@@ -1935,6 +1939,41 @@ export const handleMessageIntegration = async (
   }
 }
 
+const IsMessageForwarded = (msg:proto.IWebMessageInfo):boolean =>{
+  const isMsgForwarded =
+  msg.message?.extendedTextMessage?.contextInfo?.isForwarded ||
+  msg.message?.imageMessage?.contextInfo?.isForwarded ||
+  msg.message?.audioMessage?.contextInfo?.isForwarded ||
+  msg.message?.videoMessage?.contextInfo?.isForwarded ||
+  msg.message?.documentMessage?.contextInfo?.isForwarded
+
+  return isMsgForwarded;
+}
+
+const hasMediaMessage = (msg: proto.IWebMessageInfo):boolean => {
+  const hasMedia =
+      msg.message?.audioMessage ||
+      msg.message?.imageMessage ||
+      msg.message?.videoMessage ||
+      msg.message?.documentMessage ||
+      msg.message.stickerMessage ||
+      // msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage ||
+      // msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage ||
+      // msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.audioMessage ||
+      msg?.message?.ephemeralMessage?.message?.imageMessage ||
+      msg?.message?.ephemeralMessage?.message?.audioMessage ||
+      msg?.message?.ephemeralMessage?.message?.videoMessage ||
+      msg?.message?.ephemeralMessage?.message?.documentMessage ||
+      msg?.message?.ephemeralMessage?.message?.stickerMessage ||
+      msg.message?.viewOnceMessage?.message?.imageMessage ||
+      msg.message?.viewOnceMessage?.message?.videoMessage ||
+      msg.message?.ephemeralMessage?.message?.viewOnceMessage?.message?.imageMessage ||
+      msg.message?.ephemeralMessage?.message?.viewOnceMessage?.message?.videoMessage ||
+      msg.message?.documentWithCaptionMessage?.message?.documentMessage;
+
+    return !!hasMedia
+}
+
 const handleMessage = async (
   msg: proto.IWebMessageInfo,
   wbot: Session,
@@ -1978,25 +2017,7 @@ const handleMessage = async (
     const msgType = getTypeMessage(msg);
     if (msgType === "protocolMessage") return; // Tratar isso no futuro para excluir msgs se vor REVOKE
 
-    const hasMedia =
-      msg.message?.audioMessage ||
-      msg.message?.imageMessage ||
-      msg.message?.videoMessage ||
-      msg.message?.documentMessage ||
-      msg.message.stickerMessage ||
-      // msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage ||
-      // msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage ||
-      // msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.audioMessage ||
-      msg?.message?.ephemeralMessage?.message?.imageMessage ||
-      msg?.message?.ephemeralMessage?.message?.audioMessage ||
-      msg?.message?.ephemeralMessage?.message?.videoMessage ||
-      msg?.message?.ephemeralMessage?.message?.documentMessage ||
-      msg?.message?.ephemeralMessage?.message?.stickerMessage ||
-      msg.message?.viewOnceMessage?.message?.imageMessage ||
-      msg.message?.viewOnceMessage?.message?.videoMessage ||
-      msg.message?.ephemeralMessage?.message?.viewOnceMessage?.message?.imageMessage ||
-      msg.message?.ephemeralMessage?.message?.viewOnceMessage?.message?.videoMessage ||
-      msg.message?.documentWithCaptionMessage?.message?.documentMessage;
+    const hasMedia = hasMediaMessage(msg);
 
     // const isPrivate = /\u200d/.test(bodyMessage);
 
@@ -2088,13 +2109,22 @@ const handleMessage = async (
     ticket = tck;
 
 
-    if (ticket.status === 'closed' || (unreadMessages === 0 && whatsapp.complationMessage && formatBody(whatsapp.complationMessage, ticket) === bodyMessage)) {
-
+    if (
+      ticket.status === 'closed' ||
+      (
+        unreadMessages === 0 &&
+        whatsapp.complationMessage &&
+        formatBody(whatsapp.complationMessage, ticket) === bodyMessage
+      )
+    ) {
       return;
-
     }
 
-    if (!msg.key.fromMe && whatsapp?.integrationId > 0) {
+    if (
+        !msg.key.fromMe &&
+        !contact.disableBot &&
+        whatsapp?.integrationId > 0
+      ) {
       const integration = await ShowQueueIntegrationService(whatsapp.integrationId, companyId);
 
       await handleMessageIntegration(msg, wbot, companyId, integration, ticket);
@@ -2148,6 +2178,8 @@ const handleMessage = async (
       companyId,
       whatsappId: whatsapp?.id
     });
+
+
 
     try {
       if (!msg.key.fromMe) {
@@ -2344,17 +2376,10 @@ const handleMessage = async (
       console.log(e);
     }
 
-
-    const isMsgForwarded = msg.message?.extendedTextMessage?.contextInfo?.isForwarded ||
-      msg.message?.imageMessage?.contextInfo?.isForwarded ||
-      msg.message?.audioMessage?.contextInfo?.isForwarded ||
-      msg.message?.videoMessage?.contextInfo?.isForwarded ||
-      msg.message?.documentMessage?.contextInfo?.isForwarded
-
     if (hasMedia) {
-      mediaSent = await verifyMediaMessage(msg, ticket, contact, ticketTraking, isMsgForwarded);
+      mediaSent = await verifyMediaMessage(msg, ticket, contact, ticketTraking, IsMessageForwarded(msg));
     } else {
-      await verifyMessage(msg, ticket, contact, ticketTraking, false, isMsgForwarded);
+      await verifyMessage(msg, ticket, contact, ticketTraking, false, IsMessageForwarded(msg));
     }
 
 
@@ -2462,13 +2487,27 @@ const handleMessage = async (
     }
 
     //openai na conexao
-    if (!ticket.imported && !ticket.queue && !isGroup && !msg.key.fromMe && !ticket.userId && !isNil(whatsapp.promptId)) {
-
+    if (
+      !ticket.imported &&
+      !ticket.queue &&
+      !isGroup &&
+      !msg.key.fromMe &&
+      !ticket.userId &&
+      !contact.disableBot &&
+      !isNil(whatsapp.promptId)
+    ) {
       await handleOpenAi(msg, wbot, ticket, contact, mediaSent, ticketTraking);
     }
 
     //integraçao na conexao
-    if (!msg.key.fromMe && (!ticket.isGroup || whatsapp.groupAsTicket === "enabled") && ticket.queue && ticket.integrationId && ticket.useIntegration) {
+    if (
+      !msg.key.fromMe &&
+      (!ticket.isGroup || whatsapp.groupAsTicket === "enabled") &&
+      ticket.queue &&
+      ticket.integrationId &&
+      !contact.disableBot &&
+      ticket.useIntegration
+    ) {
 
       const integrations = await ShowQueueIntegrationService(ticket.integrationId, companyId);
 
@@ -2478,13 +2517,28 @@ const handleMessage = async (
     }
 
     //openai na fila
-    if (!ticket.imported && !isGroup && !msg.key.fromMe && !ticket.userId && !isNil(ticket.promptId) && ticket.useIntegration && ticket.queueId) {
-
+    if (
+      !ticket.imported &&
+      !isGroup &&
+      !contact.disableBot &&
+      !msg.key.fromMe &&
+      !ticket.userId &&
+      !isNil(ticket.promptId) &&
+      ticket.useIntegration &&
+      ticket.queueId
+    ) {
       await handleOpenAi(msg, wbot, ticket, contact, mediaSent, ticketTraking);
     }
 
-    if (!ticket.imported && !ticket.queue && (!ticket.isGroup || whatsapp.groupAsTicket === "enabled") && !msg.key.fromMe && !ticket.userId && whatsapp.queues.length >= 1) {
-
+    if (
+      !ticket.imported &&
+      !ticket.queue &&
+      (!ticket.isGroup || whatsapp.groupAsTicket === "enabled") &&
+      !msg.key.fromMe &&
+      !ticket.userId &&
+      !contact.disableBot &&
+      whatsapp.queues.length >= 1
+    ) {
       await verifyQueue(wbot, msg, ticket, contact, mediaSent, settings);
 
       if (ticketTraking.chatbotAt === null) {
@@ -2587,7 +2641,12 @@ const handleMessage = async (
       console.log(e);
     }
 
-    if (ticket.queue && ticket.queueId && !msg.key.fromMe) {
+    if (
+        ticket.queue &&
+        ticket.queueId &&
+        !contact.disableBot &&
+        !msg.key.fromMe
+      ) {
       if (!ticket.user || ticket.queue?.chatbots?.length > 0) {
         await sayChatbot(ticket.queueId, wbot, ticket, contact, msg);
       }

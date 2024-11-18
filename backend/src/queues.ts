@@ -693,13 +693,21 @@ async function handleVerifyQueue(job) {
       attributes: ['id', 'name'],
       where: {
         status: true,
-        dueDate: {
-          [Op.gt]: Sequelize.literal('CURRENT_DATE')
+        [Op.or]:[{
+          dueDate: {
+            [Op.gt]: Sequelize.literal('CURRENT_DATE')
+          },
+        },
+        {
+          dueDate: null
         }
+      ]
       },
       include: [
         {
-          model: Whatsapp, attributes: ["id", "name", "status", "timeSendQueue", "sendIdQueue"], where: {
+          model: Whatsapp,
+          attributes: ["id", "name", "status", "timeSendQueue", "sendIdQueue"],
+          where: {
             timeSendQueue: {
               [Op.gt]: 0
             }
@@ -707,6 +715,7 @@ async function handleVerifyQueue(job) {
         },
       ]
     });
+
 
     companies.map(async c => {
       c.whatsapps.map(async w => {
