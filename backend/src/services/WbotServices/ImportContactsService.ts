@@ -38,7 +38,7 @@ const ImportContactsService = async (companyId: number): Promise<void> => {
         where: { number, companyId }
       });
 
-      if (!numberExists) {
+      if (!numberExists && (number?.length >= 10)) {
         try {
           await CreateContactService({
             number,

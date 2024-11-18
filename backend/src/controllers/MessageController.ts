@@ -34,6 +34,9 @@ import ListSettingsService from "../services/SettingServices/ListSettingsService
 import ShowMessageService, { GetWhatsAppFromMessage } from "../services/MessageServices/ShowMessageService";
 import CompaniesSettings from "../models/CompaniesSettings";
 import EditWhatsAppMessage from "../services/MessageServices/EditWhatsAppMessage";
+import ListImagesService from "../services/MessageServices/ListImagesService";
+import ListAllMediaService from "../services/MessageServices/ListAllMediaService";
+import { getWbot } from "../libs/wbot";
 
 
 type IndexQuery = {
@@ -41,6 +44,14 @@ type IndexQuery = {
   ticketTrakingId: string;
   selectedQueues?: string;
 };
+
+type ReactMessageData = {
+  text: string,
+  fromMe: string,
+  id: string,
+  remoteJid: string,
+  ticketId: string,
+}
 
 interface TokenPayload {
   id: string;
@@ -514,6 +525,106 @@ export const edit = async (req: Request, res: Response): Promise<Response> => {
       action: "update",
       ticket
     });
+  return res.send();
+}
+
+export const ListImages = async (req: Request, res: Response): Promise<Response> => {
+  const { ticketId } = req.params;
+
+  const { images } = await ListImagesService({
+    ticketId,
+  });
+
+  return res.json({ images });
+};
+
+export const GetTicketMedia = async (req: Request, res: Response): Promise<Response> => {
+  const { ticketId } = req.params;
+
+  const { media, documents, links, calls } = await ListAllMediaService({
+    ticketId,
+  });
+
+  return res.json({ media, documents, links, calls });
+};
+
+export const ReactMessage = async (req: Request, res: Response): Promise<Response> => {
+
+  const { companyId } = req.user;
+  const data: ReactMessageData = req.body;
+  const ticket = await ShowTicketService(data.ticketId, companyId);
+  const whatsapp = await Whatsapp.findByPk(ticket.whatsappId);
+
+  const wbot = getWbot(whatsapp.id);
+
+  // se tiver quoted message quer dizer que ja foi reagida
+
+  /**
+   * pegar a mensagem pelo data.id
+   * verificar se alguma mensagem faz um quoted nela e se esse quoted é um reactionMessage
+   * se for um reactMessage verificar se o data.text é igual ao quoted.body que foi encontrado ... se for igual envia um react '' e apaga a mensagem atual
+   * se nao atualiza a mensagem com a nova reação.
+   */
+
+  // const message = await Message.findOne({
+  //   where: {
+  //     wid: data.id,
+  //     companyId
+  //   },
+
+  // });
+
+  // const messageQuoted = await Message.findOne({
+  //   where: {
+  //     quotedMsgId: message.id,
+  //     companyId
+  //   },
+  //   include: [
+  //     {
+  //       model: Message,
+  //       as: "quotedMsg",
+  //     },
+  //   ],
+  //   order: [["id", "DESC"]],
+  // });
+
+
+  // if (messageQuoted && messageQuoted.mediaType == 'reactionMessage') {
+
+  //   const quotedMessageType = messageQuoted.mediaType;
+  //   const bodyMessage = messageQuoted.body;
+
+
+  //   if (bodyMessage === data.text) {
+  //     console.log('esta removendo a reacao')
+
+
+
+  //     // const io = getIO();
+
+  //     // io.to(messageQuoted.ticketId.toString()).emit(`company-${companyId}-appMessage`, {
+  //     //   action: "delete",
+  //     //   messageQuoted
+  //     // });
+
+  //   }
+
+
+  // }
+
+
+  await wbot.sendMessage(data.remoteJid, {
+    react: {
+      text: data.text, // emoji
+      key: {
+        fromMe: data.fromMe === "true",
+        remoteJid: data.remoteJid,
+        id: data.id // nessa mensagem
+      }
+    }
+  });
+
+
   return res.send();
 }
 

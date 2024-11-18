@@ -77,7 +77,7 @@ const useStyles = makeStyles((theme) => ({
   mainPaperFilter: {
     flex: 1,
     // overflow: 'auto',
-    height: '20vh',
+    height: '21vh',
     ...theme.scrollbarStylesSoftBig,
   },
   mainHeaderBlock: {
@@ -366,7 +366,7 @@ const GridReport = () => {
             <Grid item xs={12} md={3} xl={3}>
               <UsersFilter onFiltered={handleSelectedUsers} />
             </Grid>
-            <Grid item xs={12} md={4} xl={4}>
+            <Grid item xs={12} md={3} xl={3} style={{ marginTop: '-8px' }}>
               <TagsFilter onFiltered={handleSelectedTags} />
             </Grid>
             <Grid item xs={12} md={3} xl={3} style={{ marginTop: '-13px' }}>
