@@ -276,6 +276,7 @@ function Chat(props) {
       setMessages([]);
       setMessagesPage(1);
       setCurrentChat(chat);
+      localStorage.setItem("currentChat", JSON.stringify(chat));
       setTab(1);
     } catch (err) { }
   };

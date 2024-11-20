@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   Box,
+  Button,
   FormControl,
   IconButton,
   Input,
@@ -14,6 +15,20 @@ import SendIcon from "@material-ui/icons/Send";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { useDate } from "../../hooks/useDate";
 import api from "../../services/api";
+
+import AttachFileIcon from "@material-ui/icons/AttachFile";
+import CancelIcon from "@material-ui/icons/Cancel";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import ModalImageCors from "../../components/ModalImageCors";
+// import { Divider } from "@mui/material";
+import { GetApp } from "@material-ui/icons";
+import toastError from "../../errors/toastError";
+import MicRecorder from "mic-recorder-to-mp3";
+import MicIcon from "@material-ui/icons/Mic";
+import HighlightOffIcon from "@material-ui/icons/HighlightOff";
+import CheckCircleOutlineIcon from "@material-ui/icons/CheckCircleOutline";
+import RecordingTimer from "../../components/MessageInputCustom/RecordingTimer";
+import { green } from '@material-ui/core/colors';
 
 const useStyles = makeStyles((theme) => ({
   mainContainer: {
@@ -66,7 +81,64 @@ const useStyles = makeStyles((theme) => ({
     borderBottomRightRadius: 0,
     border: "1px solid rgba(0, 0, 0, 0.12)",
   },
+  sendMessageIcons: {
+    color: "grey",
+  },
+  uploadInput: {
+    display: "none",
+  },
+  circleLoading: {
+    color: green[500],
+    opacity: "70%",
+    position: "absolute",
+    top: "20%",
+    left: "50%",
+    marginLeft: -12,
+  },
+  viewMediaInputWrapper: {
+    display: "flex",
+    padding: "10px 13px",
+    position: "relative",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#eee",
+    borderTop: "1px solid rgba(0, 0, 0, 0.12)",
+  },
+  downloadMedia: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "inherit",
+    padding: 10,
+  },
+  messageMedia: {
+    objectFit: "cover",
+    width: 250,
+    height: 200,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+  },
+  recorderWrapper: {
+    display: "flex",
+    alignItems: "center",
+    alignContent: "middle",
+    justifyContent: 'flex-end',
+  },
+  cancelAudioIcon: {
+    color: "red",
+  },
+  audioLoading: {
+    color: green[500],
+    opacity: "70%",
+  },
+  sendAudioIcon: {
+    color: "green",
+  },
 }));
+
+const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
 export default function ChatMessages({
   chat,
@@ -75,7 +147,6 @@ export default function ChatMessages({
   handleLoadMore,
   scrollToBottomRef,
   pageInfo,
-  loading,
 }) {
   const classes = useStyles();
   const { user } = useContext(AuthContext);
@@ -83,6 +154,9 @@ export default function ChatMessages({
   const baseRef = useRef();
 
   const [contentMessage, setContentMessage] = useState("");
+  const [medias, setMedias] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [recording, setRecording] = useState(false);
 
   const scrollToBottom = () => {
     if (baseRef.current) {
@@ -116,6 +190,122 @@ export default function ChatMessages({
     }
   };
 
+
+  const handleChangeMedias = (e) => {
+    if (!e.target.files) {
+      return;
+    }
+    const selectedMedias = Array.from(e.target.files);
+    setMedias(selectedMedias);
+  };
+  const checkMessageMedia = (message) => {
+    
+    if (message.mediaType === "image") {
+      return <ModalImageCors imageUrl={message.mediaPath} />;
+    }
+    if (message.mediaType === "audio") {
+      return (
+        <audio controls>
+          <source src={message.mediaPath} type="audio/ogg"></source>
+        </audio>
+      );
+    }
+    if (message.mediaType === "video") {
+      return (
+        <video
+          className={classes.messageMedia}
+          src={message.mediaPath}
+          controls
+        />
+      );
+    } else {
+      return (
+        <>
+          <div className={classes.downloadMedia}>
+            <Button
+              startIcon={<GetApp />}
+              color="primary"
+              variant="outlined"
+              target="_blank"
+              href={message.mediaPath}
+            >
+              Download
+            </Button>
+          </div>
+          {/* <Divider /> */}
+        </>
+      );
+    }
+  };
+  const handleSendMedia = async (e) => {
+    setLoading(true);
+    e.preventDefault();
+    const currentChat = JSON.parse(localStorage.getItem("currentChat"));
+    const formData = new FormData();
+    formData.append("fromMe", true);
+    formData.append("typeArch","chats");
+    medias.forEach((media) => {
+      formData.append("medias", media);
+      formData.append("body", media.name);
+      
+    });
+    try {
+      await api.post(`/chats/${currentChat.id}/messages`, formData);
+    } catch (err) {
+      console.log(err);
+      toastError(err);
+    }
+    setLoading(false);
+    setMedias([]);
+  };
+  const handleStartRecording = async () => {
+    setLoading(true);
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      await Mp3Recorder.start();
+      setRecording(true);
+      setLoading(false);
+    } catch (err) {
+      toastError(err);
+      setLoading(false);
+    }
+  };
+  const handleUploadAudio = async (e) => {
+    setLoading(true);
+    e.preventDefault();
+    const [, blob] = await Mp3Recorder.stop().getMp3();
+    if (blob.size < 10000) {
+      setLoading(false);
+      setRecording(false);
+      return;
+    }
+       
+    const formData1 = new FormData();
+    formData1.append("fromMe", true);
+    formData1.append("typeArch","chats");
+    const currentChat = JSON.parse(localStorage.getItem("currentChat"));
+    const filename = `audio-${new Date().getTime()}.mp3`;
+    formData1.append("medias", blob, filename);
+    formData1.append("body", filename);
+    
+    try {
+      await api.post(`/chats/${currentChat.id}/messages`, formData1);
+      // await api.post(`/messages/${ticketId}`, formData);
+    } catch (err) {
+      toastError(err);
+    }
+    setRecording(false);
+    setLoading(false);
+  };
+  const handleCancelAudio = async () => {
+    try {
+      await Mp3Recorder.stop().getMp3();
+      setRecording(false);
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
   return (
     <Paper className={classes.mainContainer}>
       <div onScroll={handleScroll} className={classes.messageList}>
@@ -127,6 +317,7 @@ export default function ChatMessages({
                   <Typography variant="subtitle2">
                     {item.sender.name}
                   </Typography>
+                  {item.mediaPath && checkMessageMedia(item)}
                   {item.message}
                   <Typography variant="caption" display="block">
                     {datetimeToClient(item.createdAt)}
@@ -139,6 +330,7 @@ export default function ChatMessages({
                   <Typography variant="subtitle2">
                     {item.sender.name}
                   </Typography>
+                  {item.mediaPath && checkMessageMedia(item)}
                   {item.message}
                   <Typography variant="caption" display="block">
                     {datetimeToClient(item.createdAt)}
@@ -151,35 +343,152 @@ export default function ChatMessages({
       </div>
       <div className={classes.inputArea}>
         <FormControl variant="outlined" fullWidth>
-          <Input
-            multiline
-            value={contentMessage}
-            onKeyUp={(e) => {
-              if (e.key === "Enter" && contentMessage.trim() !== "") {
-                handleSendMessage(contentMessage);
-                setContentMessage("");
-              }
-            }}
-            onChange={(e) => setContentMessage(e.target.value)}
-            className={classes.input}
-            endAdornment={
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={() => {
-                    if (contentMessage.trim() !== "") {
-                      handleSendMessage(contentMessage);
-                      setContentMessage("");
+        {recording ? (
+            <div className={classes.recorderWrapper}>
+              <IconButton
+                aria-label="cancelRecording"
+                component="span"
+                fontSize="large"
+                disabled={loading}
+                onClick={handleCancelAudio}
+              >
+                <HighlightOffIcon className={classes.cancelAudioIcon} />
+              </IconButton>
+              {loading ? (
+                <div>
+                  <CircularProgress className={classes.audioLoading} />
+                </div>
+              ) : (
+                <RecordingTimer />
+              )}
+
+              <IconButton
+                aria-label="sendRecordedAudio"
+                component="span"
+                onClick={handleUploadAudio}
+                disabled={loading}
+              >
+                <CheckCircleOutlineIcon className={classes.sendAudioIcon} />
+              </IconButton>
+            </div>
+
+          )
+            :
+            <>
+              {medias.length > 0 ?
+                <>
+                  <Paper elevation={0} square className={classes.viewMediaInputWrapper}>
+                    <IconButton
+                      aria-label="cancel-upload"
+                      component="span"
+                      onClick={(e) => setMedias([])}
+                    >
+                      <CancelIcon className={classes.sendMessageIcons} />
+                    </IconButton>
+
+                    {loading ? (
+                      <div>
+                        <CircularProgress className={classes.circleLoading} />
+                      </div>
+                    ) : (
+                      <span>
+                        {medias[0]?.name}
+                      </span>
+                    )}
+                    <IconButton
+                      aria-label="send-upload"
+                      component="span"
+                      onClick={handleSendMedia}
+                      disabled={loading}
+                    >
+                      <SendIcon className={classes.sendMessageIcons} />
+                    </IconButton>
+                  </Paper>
+                </>
+                :
+                <React.Fragment>
+                  <Input
+                    multiline
+                    value={contentMessage}
+                    onKeyUp={(e) => {
+                      if (e.key === "Enter" && contentMessage.trim() !== "") {
+
+                        handleSendMessage(contentMessage);
+                        setContentMessage("");
+                      }
+                    }}
+                    onChange={(e) => setContentMessage(e.target.value)}
+                    className={classes.input}
+                    startAdornment={
+                      <InputAdornment position="start">
+                        <FileInput disableOption={loading} handleChangeMedias={handleChangeMedias} />
+                      </InputAdornment>
                     }
-                  }}
-                  className={classes.buttonSend}
-                >
-                  <SendIcon />
-                </IconButton>
-              </InputAdornment>
-            }
-          />
+                    endAdornment={
+                      <InputAdornment position="end">
+                        {contentMessage ? (
+                          <IconButton
+                            onClick={() => {
+                              if (contentMessage.trim() !== "") {
+                                handleSendMessage(contentMessage);
+                                setContentMessage("");
+                              }
+                            }}
+                            className={classes.buttonSend}
+                          >
+                            <SendIcon />
+                          </IconButton>
+
+                        )
+
+                          : (
+                            <IconButton
+                              aria-label="showRecorder"
+                              component="span"
+                              disabled={loading}
+                              onClick={handleStartRecording}
+                            >
+                              <MicIcon className={classes.sendMessageIcons} />
+                            </IconButton>
+                          )
+
+                        }
+                      </InputAdornment>
+                    }
+                  />
+                </React.Fragment>
+              }
+            </>
+          }
         </FormControl>
       </div>
     </Paper>
   );
 }
+
+
+const FileInput = (props) => {
+  const { handleChangeMedias, disableOption } = props;
+  const classes = useStyles();
+  return (
+    <>
+      <input
+        multiple
+        type="file"
+        id="upload-button"
+        disabled={disableOption}
+        className={classes.uploadInput}
+        onChange={handleChangeMedias}
+      />
+      <label htmlFor="upload-button">
+        <IconButton
+          aria-label="upload"
+          component="span"
+          disabled={disableOption}
+        >
+          <AttachFileIcon className={classes.sendMessageIcons} />
+        </IconButton>
+      </label>
+    </>
+  );
+};

@@ -120,7 +120,7 @@ const multVecardGet = function (param: any) {
   let fim = param.split("\n")[4].indexOf(':')
   let contact = param.split("\n")[4].substring(inicio + 1, fim).replace(";", "")
   let contactSemWhats = param.split("\n")[4].replace("item1.TEL:", "")
-  //console.log(contact);
+
   if (contact != "item1.TEL") {
     output = output + name + ": 📞" + contact + "" + "\n"
   } else
@@ -1176,19 +1176,26 @@ const verifyQueue = async (
     await ticket.reload();
   }
 
-  if (selectedOption == "Sair") {
+  if (selectedOption.toLocaleLowerCase() == "sair") {
     // Encerra atendimento
-
-    const ticketData = {
-      isBot: false,
-      queueId: null,
-      userId: null,
-      status: "closed",
-      sendFarewellMessage: false,
-      maxUseBotQueues: 0
+    const ticketUpdateAgent = {
+      ticketData: {
+        status: "closed",
+        amountUsedBotQueues: 0
+      },
+      ticketId: ticket.id,
+      companyId: ticket.companyId
     };
+    // const ticketData = {
+    //   isBot: false,
+    //   queueId: null,
+    //   userId: null,
+    //   status: "closed",
+    //   sendFarewellMessage: false,
+    //   maxUseBotQueues: 0
+    // };
 
-    await UpdateTicketService({ ticketData, ticketId: ticket.id, companyId })
+    await UpdateTicketService(ticketUpdateAgent);
     // await ticket.update({ queueOptionId: null, chatbot: false, queueId: null, userId: null, status: "closed"});
     //await verifyQueue(wbot, msg, ticket, ticket.contact);
 
@@ -1791,11 +1798,11 @@ const verifyQueue = async (
 };
 
 export const verifyRating = (ticketTraking: TicketTraking) => {
+
   if (
     ticketTraking &&
     ticketTraking.finishedAt === null &&
     ticketTraking.closedAt !== null &&
-    ticketTraking.userId !== null &&
     ticketTraking.ratingAt === null
   ) {
     return true;
@@ -1834,6 +1841,7 @@ export const handleRating = async (
   });
 
   if (!isNil(complationMessage) && complationMessage !== "" && !ticket.isGroup) {
+
     const body = formatBody(`\u200e${complationMessage}`, ticket);
     if (ticket.channel === "whatsapp") {
       const msg = await SendWhatsAppMessage({ body, ticket });
@@ -2133,62 +2141,6 @@ const handleMessage = async (
       return;
     }
 
-    if (
-      !msg.key.fromMe &&
-      !contact.disableBot &&
-      whatsapp?.integrationId > 0
-    ) {
-      const integration = await ShowQueueIntegrationService(whatsapp.integrationId, companyId);
-
-      await handleMessageIntegration(msg, wbot, companyId, integration, ticket);
-
-      await ticket.update({
-        useIntegration: true,
-        integrationId: integration.id
-      })
-
-      // return
-    }
-
-
-    // console.log(ticket)
-
-
-    // if (msgType === "editedMessage" || msgType === "protocolMessage") {
-
-
-    //   const msgKeyIdEdited = msg.message.editedMessage.message.protocolMessage.key.id;
-    //   const bodyEdited = msg.message.editedMessage.message.protocolMessage.editedMessage.conversation;
-    //   const io = getIO();
-    //   try {
-    //     const messageToUpdate = await Message.findOne({
-    //       where: {
-    //         wid: msgKeyIdEdited,
-    //         companyId,
-    //         ticketId: ticket.id
-    //       }
-    //     })
-
-    //     if (!messageToUpdate) return
-
-    //     await messageToUpdate.update({ isEdited: true, body: bodyEdited });
-
-    //     await ticket.update({ lastMessage: bodyEdited })
-
-    //     io.to(messageToUpdate.ticketId.toString()).emit(
-    //       `company-${messageToUpdate.companyId}-appMessage`,
-    //       {
-    //         action: "update",
-    //         message: messageToUpdate
-    //       }
-    //     );
-    //   } catch (err) {
-    //     Sentry.captureException(err);
-    //     logger.error(`Error handling message ack. Err: ${err}`);
-    //   }
-    //   return
-    // }
-
     if (msgType === "editedMessage" || msgType === "protocolMessage") {
 
       const msgKeyIdEdited = msgType === "editedMessage" ? msg.message.editedMessage.message.protocolMessage.key.id : msg.message?.protocolMessage.key.id;
@@ -2251,6 +2203,7 @@ const handleMessage = async (
         /**
          * Tratamento para avaliação do atendente
          */
+
         if (ticket.status === "nps" && ticketTraking !== null && verifyRating(ticketTraking)) {
 
           if (!isNaN(parseFloat(bodyMessage))) {
@@ -2267,6 +2220,7 @@ const handleMessage = async (
           } else {
 
             if (ticket.amountUseBotQueuesNPS < whatsapp.maxUseBotQueuesNPS) {
+
               let bodyErrorRating = `\u200eOpção inválida, tente novamente.\n`;
               const sentMessage = await wbot.sendMessage(
                 `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
@@ -2312,10 +2266,23 @@ const handleMessage = async (
                 await contact.update({
                   lgpdAcceptedAt: moment().toDate(),
                 });
-                await ticket.update({
-                  lgpdAcceptedAt: moment().toDate(),
-                  amountUsedBotQueues: 0
-                });
+                if(
+                    whatsapp?.queues.length === 0 &&
+                    !whatsapp.integrationId &&
+                    !whatsapp.promptId
+                  ){
+                    await ticket.update({
+                      lgpdAcceptedAt: moment().toDate(),
+                      amountUsedBotQueues: 0,
+                      status: 'pending'
+                    });
+                  }else{
+                    await ticket.update({
+                      lgpdAcceptedAt: moment().toDate(),
+                      amountUsedBotQueues: 0,
+                    });
+                  }
+                //return
                 //Se digitou 2, recusou o bot e encerra chamado
               } else if (choosenOption === 2) {
 
@@ -2551,6 +2518,34 @@ const handleMessage = async (
       console.log(e);
     }
 
+    //integraçao na conexao
+    if (
+      !msg.key.fromMe &&
+      !contact.disableBot &&
+      !ticket.userId &&
+      whatsapp?.integrationId > 0 &&
+      (ticket?.status !== 'nps')
+    ) {
+
+      const integration = await ShowQueueIntegrationService(whatsapp.integrationId, companyId);
+
+      await handleMessageIntegration(msg, wbot, companyId, integration, ticket);
+
+      await ticket.update({
+        useIntegration: true,
+        integrationId: integration.id
+      })
+
+      if ((ticket.status === "lgpd") && !isNil(ticket.lgpdAcceptedAt)){
+        await ticket.update({
+          status: "pending"
+        });
+        await ticket.reload();
+      }
+
+      return
+    }
+
     //openai na conexao
     if (
       !ticket.imported &&
@@ -2559,24 +2554,39 @@ const handleMessage = async (
       !msg.key.fromMe &&
       !ticket.userId &&
       !contact.disableBot &&
-      !isNil(whatsapp.promptId)
+      !isNil(whatsapp.promptId) &&
+      (ticket?.status !== 'nps')
     ) {
       await handleOpenAi(msg, wbot, ticket, contact, mediaSent, ticketTraking);
+      if ((ticket.status === "lgpd") && !isNil(ticket.lgpdAcceptedAt)){
+        await ticket.update({
+          status: "pending"
+        });
+        await ticket.reload();
+      }
     }
 
-    //integraçao na conexao
+
     if (
       !msg.key.fromMe &&
       (!ticket.isGroup || whatsapp.groupAsTicket === "enabled") &&
       ticket.queue &&
       ticket.integrationId &&
       !contact.disableBot &&
-      ticket.useIntegration
+      ticket.useIntegration &&
+      !ticket.userId &&
+      (ticket?.status !== 'nps')
     ) {
 
       const integrations = await ShowQueueIntegrationService(ticket.integrationId, companyId);
 
       await handleMessageIntegration(msg, wbot, companyId, integrations, ticket)
+      if ((ticket.status === "lgpd") && !isNil(ticket.lgpdAcceptedAt)){
+        await ticket.update({
+          status: "pending"
+        });
+        await ticket.reload();
+      }
 
       return
     }
@@ -2590,9 +2600,17 @@ const handleMessage = async (
       !ticket.userId &&
       !isNil(ticket.promptId) &&
       ticket.useIntegration &&
-      ticket.queueId
+      ticket.queueId &&
+      (ticket?.status !== 'nps')
     ) {
+
       await handleOpenAi(msg, wbot, ticket, contact, mediaSent, ticketTraking);
+      if ((ticket.status === "lgpd") && !isNil(ticket.lgpdAcceptedAt)){
+        await ticket.update({
+          status: "pending"
+        });
+        await ticket.reload();
+      }
     }
 
     if (
@@ -2602,8 +2620,10 @@ const handleMessage = async (
       !msg.key.fromMe &&
       !ticket.userId &&
       !contact.disableBot &&
-      whatsapp.queues.length >= 1
+      whatsapp.queues.length >= 1 &&
+      (ticket?.status !== 'nps')
     ) {
+
       await verifyQueue(wbot, msg, ticket, contact, mediaSent, settings);
 
       if (ticketTraking.chatbotAt === null) {
@@ -2710,7 +2730,8 @@ const handleMessage = async (
       ticket.queue &&
       ticket.queueId &&
       !contact.disableBot &&
-      !msg.key.fromMe
+      !msg.key.fromMe &&
+      (ticket?.status !== 'nps')
     ) {
       if (!ticket.user || ticket.queue?.chatbots?.length > 0) {
         await sayChatbot(ticket.queueId, wbot, ticket, contact, msg);
@@ -2988,78 +3009,6 @@ const wbotMessageListener = (wbot: Session, companyId: number): void => {
 
     });
   })
-
-  // wbot.ev.on("presence.update", (m) => {
-
-  //   const number = m.id.replace(/\D/g, "");
-  //   console.log('number', number)
-
-  //   console.log('teste', m.presences[m.id]. if (!process.env.ISLOCAL) {lastKnownPresence)
-
-  // });
-
-
-  // wbot.ev.on("contacts.update", (contact: ContactBaileys[]) => {
-  //   console.log('contact', contact)
-  // })
-
-
-  // possivel N8N
-  // PROTOCOLO_ON_OF = on
-  // URL_API_N8N = https://sua urll
-
-  // if (process.env.PROTOCOLO_ON_OF === 'on') {
-  //   wbot.ev.on("messages.upsert", async (messageUpsert: ImessageUpsert) => {
-  //     const messages = messageUpsert.messages
-  //       .filter(filterMessages)
-  //       .map(msg => msg);
-
-  //     if (!messages) return;
-
-  //     messages.forEach(async (message: proto.IWebMessageInfo) => {
-  //       const messageExists = await Message.count({
-  //         where: { id: message.key.id!, companyId }
-  //       });
-
-  //       if (!messageExists) {
-
-  //         var data = {
-  //           remoteJid: message?.key?.remoteJid,
-  //           id: message?.key?.id,
-  //           pushName: message?.pushName,
-  //           message: message?.message?.conversation
-  //         }
-
-  //         var config = {
-  //           method: 'post',
-  //           url: 'https://n8n.whatsatende.com.br/webhook-test/4680694b-db24-4f59-aa94-51ca54c95ce6',
-  //           headers: {
-  //             'Content-Type': 'application/json',
-  //           },
-  //           data
-  //         };
-
-  //         try {
-  //           axios(config)
-  //             .then(async function (response) {
-
-
-  //               console.log('response', response.status)
-
-  //             })
-  //             .catch(async function (error) {
-  //               // console.log('Deu erro: ', error);
-  //               console.log(error.response.data)
-  //             });
-
-  //         } catch (error) {
-  //           throw new Error(error);
-  //         }
-  //       }
-  //     });
-  //   });
-  // }
-
 
 };
 

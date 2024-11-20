@@ -68,7 +68,7 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
       where: { status: {[Op.in] : ["open", "nps"]} , companyId},
       order: [["updatedAt", "DESC"]]
     });
-
+    if(tickets.length  < 1) return;
     tickets.forEach(async ticket => {
       const showTicket = await ShowTicketService(ticket.id, companyId);
       const whatsapp = await Whatsapp.findByPk(showTicket?.whatsappId);

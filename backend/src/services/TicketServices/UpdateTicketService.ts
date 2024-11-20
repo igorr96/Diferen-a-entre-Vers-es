@@ -20,7 +20,6 @@ import CompaniesSettings from "../../models/CompaniesSettings";
 import CreateLogTicketService from "./CreateLogTicketService";
 import TicketTag from "../../models/TicketTag";
 import Tag from "../../models/Tag";
-import FindCompanySettingOneService from '../CompaniesSettings/FindCompanySettingOneService';
 import formatBody from "../../helpers/Mustache";
 
 interface TicketData {
@@ -124,10 +123,11 @@ const UpdateTicketService = async ({
 
     if (status !== undefined && ["closed"].indexOf(status) > -1) {
 
-      if (settings.userRating === "enabled" &&
-        (sendFarewellMessage || sendFarewellMessage === undefined) &&
+      if (
+        settings.userRating === "enabled" &&
         (!isNil(ratingMessage) && ratingMessage !== "") &&
-        !ticket.isGroup) {
+        !ticket.isGroup
+      ) {
 
         if (!ticketTraking.ratingAt) {
 
@@ -140,7 +140,6 @@ const UpdateTicketService = async ({
           }
 
           if (["facebook", "instagram"].includes(ticket.channel)) {
-            console.log(`Checking if ${ticket.contact.number} is a valid ${ticket.channel} contact`)
             const msg = await sendFaceMessage({ body: bodyRatingMessage, ticket });
             await verifyMessageFace(msg, bodyRatingMessage, ticket, ticket.contact);
           }
@@ -148,7 +147,6 @@ const UpdateTicketService = async ({
           await ticketTraking.update({
             userId: ticket.userId,
             closedAt: moment().toDate()
-
           });
 
           await CreateLogTicketService({
@@ -219,9 +217,7 @@ const UpdateTicketService = async ({
           }
 
           if (["facebook", "instagram"].includes(ticket.channel) && (!ticket.isGroup || groupAsTicket === "enabled")) {
-            console.log(`Checking if ${ticket.contact.number} is a valid ${ticket.channel} contact`)
             const sentMessage = await sendFaceMessage({ body, ticket });
-            // await verifyMessageFace(sentMessage, body, ticket, ticket.contact );
           }
         }
       }
@@ -299,14 +295,6 @@ const UpdateTicketService = async ({
         queueId: ticket.queueId,
         lastMessage: lastMessage ? lastMessage : ticket.lastMessage,
       })
-
-      // ticketTraking.queuedAt = moment().toDate();
-      // ticketTraking.lastMessage = lastMessage !== null ? lastMessage : ticket.lastMessage;
-      // ticketTraking.status = status;
-      // ticketTraking.userId = ticket.userId;
-      // ticketTraking.contactId = ticket.contactId;
-      // ticketTraking.queueId = ticket.queueId;
-      // ticketTraking.lastMessage = lastMessage ? lastMessage : ticket.lastMessage;
     }
 
     if (settings.sendMsgTransfTicket === "enabled") {
@@ -315,16 +303,10 @@ const UpdateTicketService = async ({
 
         const queue = await Queue.findByPk(queueId);
         const wbot = await GetTicketWbot(ticket);
-       // const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}"*\nAguarde um momento, iremos atende-lo(a)!`;
-        const tempSettingMessage = await FindCompanySettingOneService({companyId, column: "transferMessage"});
-        const settingMessage = tempSettingMessage[0];
 
-        let msgtxt = '';
-        if((settingMessage?.transferMessage?.trim() !== "") && settingMessage?.transferMessage){
-          msgtxt = `${settingMessage?.transferMessage}`;
-        }else{
-          msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}"*\nAguarde um momento, iremos atende-lo(a)!`;
-        }
+
+        const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}"*\nAguarde um momento, iremos atende-lo(a)!`;
+
 
         const bodyMsg = formatBody(`${msgtxt}`, ticket);
         const queueChangedMessage = await wbot.sendMessage(
@@ -338,17 +320,13 @@ const UpdateTicketService = async ({
       else
         // Mensagem de transferencia do ATENDENTE
         if (oldUserId !== userId && oldQueueId === queueId && !isNil(oldUserId) && !isNil(userId) && (!ticket.isGroup || groupAsTicket === "enabled")) {
+
           const wbot = await GetTicketWbot(ticket);
+
           const nome = await ShowUserService(ticketData.userId);
-          //const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o atendente *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
-          const tempSettingMessage = await FindCompanySettingOneService({companyId, column: "transferMessage"});
-          const settingMessage = tempSettingMessage[0];
-          let msgtxt = '';
-          if((settingMessage?.transferMessage?.trim() !== "") && settingMessage?.transferMessage){
-            msgtxt = `${settingMessage?.transferMessage}`;
-          }else{
-            msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o atendente *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
-          }
+
+          const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o atendente *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
+
 
           const bodyMsg = formatBody(`${msgtxt}`, ticket);
           const queueChangedMessage = await wbot.sendMessage(
@@ -365,15 +343,8 @@ const UpdateTicketService = async ({
             const wbot = await GetTicketWbot(ticket);
             const queue = await Queue.findByPk(queueId);
             const nome = await ShowUserService(ticketData.userId);
-            //const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}* e será atendido por *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
-            const tempSettingMessage = await FindCompanySettingOneService({companyId, column: "transferMessage"});
-            const settingMessage = tempSettingMessage[0];
-            let msgtxt = '';
-            if((settingMessage?.transferMessage?.trim() !== "") && settingMessage?.transferMessage){
-              msgtxt = `${settingMessage?.transferMessage}`;
-            }else{
-              msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}* e será atendido por *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
-            }
+
+            const msgtxt = `\u200e*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *${queue?.name}* e será atendido por *${nome.name}*\nAguarde um momento, iremos atende-lo(a)!`;
 
             const bodyMsg = formatBody(`${msgtxt}`, ticket);
             const queueChangedMessage = await wbot.sendMessage(
@@ -388,16 +359,8 @@ const UpdateTicketService = async ({
 
               const queue = await Queue.findByPk(queueId);
               const wbot = await GetTicketWbot(ticket);
-             // const msgtxt = "*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *" + queue?.name + "*\nAguarde um momento, iremos atende-lo(a)!";
-              const tempSettingMessage = await FindCompanySettingOneService({companyId, column: "transferMessage"});
-              const settingMessage = tempSettingMessage[0];
 
-              let msgtxt = '';
-              if((settingMessage?.transferMessage?.trim() !== "") && settingMessage?.transferMessage){
-                msgtxt = `${settingMessage?.transferMessage}`;
-              }else{
-                msgtxt = "*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *" + queue?.name + "*\nAguarde um momento, iremos atende-lo(a)!";
-              }
+              const msgtxt = "*Mensagem Automática*:\nVocê foi transferido(a) para o departamento *" + queue?.name + "*\nAguarde um momento, iremos atende-lo(a)!";
 
               const bodyMsg = formatBody(`${msgtxt}`, ticket);
               const queueChangedMessage = await wbot.sendMessage(

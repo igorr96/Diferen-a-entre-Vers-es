@@ -404,6 +404,9 @@ const messages = {
 					"This color is already in use, pick another one.",
 				ERR_WAPP_GREETING_REQUIRED:
 					"Greeting message is required if there is more than one queue.",
+				ERROR_TICKET_OPEN:
+					"There is already an open ticket for this contact on this connection"
+
 			},
 		},
 	},

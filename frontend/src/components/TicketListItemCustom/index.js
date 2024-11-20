@@ -556,15 +556,15 @@ const TicketListItemCustom = ({ ticket }) => {
 
                                     </>
                                 }
-                                {/* <span className={classes.secondaryContentSecond} >
+                                <span className={classes.secondaryContentSecond} >
                                     {whatsAppName ? <Badge className={classes.connectionTag}>{whatsAppName}</Badge> : <br></br>}
                                     {<Badge style={{ backgroundColor: ticket.queue?.color || "#7c7c7c" }} className={classes.connectionTag}>{ticket.queue?.name.toUpperCase() || "SEM FILA"}</Badge>}
-                                    {ticketUser && (<Badge style={{ backgroundColor: "#000000" }} className={classes.connectionTag}>{ticketUser}</Badge>)}
+                                    {/* {ticketUser && (<Badge style={{ backgroundColor: "#000000" }} className={classes.connectionTag}>{ticketUser}</Badge>)} */}
 
-                                </span> */}
+                                </span>
                                 <Stack direction="row" spacing={1} mt={1}>
-                                    {whatsAppName && (<Chip sx={{ mt: 1 }} avatar={<WifiCallingIcon />} label={whatsAppName} variant="outlined" size="small" />)}
-                                    {(<Chip sx={{ mt: 1 }} avatar={<TurnedInNotIcon />} label={ticket.queue?.name.toUpperCase() || "SEM FILA"} variant="outlined" size="small" />)}
+                                    {/* {whatsAppName && (<Chip sx={{ mt: 1 }} avatar={<WifiCallingIcon />} label={whatsAppName} variant="outlined" size="small" />)} */}
+                                    {/* {(<Chip sx={{ mt: 1 }} avatar={<TurnedInNotIcon />} label={ticket.queue?.name.toUpperCase() || "SEM FILA"} variant="outlined" size="small" />)} */}
                                     {ticketUser && (<Chip sx={{ mt: 1 }} avatar={<FaceIcon />} label={ticketUser} variant="outlined" size="small" />)}
 
 

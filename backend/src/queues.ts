@@ -38,7 +38,6 @@ import { addSeconds, differenceInSeconds } from "date-fns";
 
 const nodemailer = require('nodemailer');
 const CronJob = require('cron').CronJob;
-import axios from 'axios';
 
 const connection = process.env.REDIS_URI || "";
 const limiterMax = process.env.REDIS_OPT_LIMITER_MAX || 1;
@@ -849,18 +848,15 @@ async function handleRandomUser() {
 
       	//console.log(user);
 
-        if(user.profile === "user"){
-        	logger.info("USER");
+      //  if(user.profile === "user"){
+        	logger.info(user.profile);
         		if(user.online === true){
         			return user.id;
-                }else{
+            }else{
                 	logger.info("USER OFFLINE");
         			return 0;
-                }
-        }else{
-        	logger.info("ADMIN");
-        	return 0;
-        }
+            }
+       // }
 
       } catch (errorV) {
     	Sentry.captureException(errorV);
@@ -868,6 +864,7 @@ async function handleRandomUser() {
         throw errorV;
   	  }
 	};
+
 
     if (count > 0) {
       for (const ticket of tickets) {

@@ -1552,6 +1552,8 @@ const messages = {
 					"Este color ya está en uso, elija otro.",
 				ERR_WAPP_GREETING_REQUIRED:
 					"El mensaje de saludo es obligatorio cuando hay más de una fila.",
+				ERROR_TICKET_OPEN:
+					"Ya hay un ticket abierto para este contacto en esta conexión"
 			},
 		},
 	},

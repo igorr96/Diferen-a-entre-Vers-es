@@ -13,7 +13,7 @@ export default {
 
       let companyId;
       companyId = req.user?.companyId
-      const { typeArch, fileId } = req.body;      
+      const { typeArch, fileId } = req.body;
 
       if (companyId === undefined && isNil(companyId) && isEmpty(companyId)) {
         const authHeader = req.headers.authorization;
@@ -23,14 +23,14 @@ export default {
       }
       let folder;
 
-      if (typeArch && typeArch !== "announcements") {
-        folder =  path.resolve(publicFolder , `company${companyId}`, typeArch, fileId ? fileId : "") 
-      } else if (typeArch && typeArch === "announcements") {
-        folder =  path.resolve(publicFolder , typeArch) 
+      if (typeArch && (typeArch !== "announcements" && typeArch !== "chats")) {
+        folder =  path.resolve(publicFolder , `company${companyId}`, typeArch, fileId ? fileId : "")
+      } else if (typeArch && (typeArch === "announcements" || (typeArch === "chats") )) {
+        folder =  path.resolve(publicFolder , typeArch)
       }
       else
       {
-        folder =  path.resolve(publicFolder , `company${companyId}`) 
+        folder =  path.resolve(publicFolder , `company${companyId}`)
       }
 
       if (!fs.existsSync(folder)) {

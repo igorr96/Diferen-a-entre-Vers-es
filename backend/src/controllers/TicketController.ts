@@ -13,6 +13,8 @@ import ListTicketsServiceKanban from "../services/TicketServices/ListTicketsServ
 import CreateLogTicketService from "../services/TicketServices/CreateLogTicketService";
 import ShowLogTicketService from "../services/TicketServices/ShowLogTicketService";
 import ListTicketsServiceReport from '../services/TicketServices/ListTicketsServiceReport';
+import { Op } from 'sequelize';
+import AppError from '../errors/AppError';
 
 
 type IndexQuery = {
@@ -241,6 +243,20 @@ export const report = async (req: Request, res: Response): Promise<Response> => 
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { contactId, status, userId, queueId, whatsappId }: TicketData = req.body;
   const { companyId } = req.user;
+
+  const ticketOpen = await Ticket.findOne({
+    where:{
+      contactId,
+      companyId,
+      whatsappId,
+      status:{ [Op.or]: ['open', 'pending','nps', 'lgpd'] }
+    }
+  })
+
+
+  if(ticketOpen){
+    throw new AppError('ERROR_TICKET_OPEN')
+  }
 
   const ticket = await CreateTicketService({
     contactId,
